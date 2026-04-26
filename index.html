@@ -1287,6 +1287,7 @@ function renderTimetable() {
             <div class="tt-block-name">${s.name}</div>
             <div class="tt-block-meta">${s.course} · ${s.section}</div>
             <div class="tt-block-meta">${fmtTime(m.time[0])}–${fmtTime(m.time[1])}</div>
+            ${s.instructor ? `<div class="tt-block-meta" style="opacity:0.8;font-size:0.7rem;">${s.instructor}</div>` : ""}
           </div>
         `;
       }
