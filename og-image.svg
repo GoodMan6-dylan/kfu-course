@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="الشعب الدراسية — جامعة الملك فيصل | KFU Course Sections">
+  <defs>
+    <linearGradient id="back" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#006c35"/>
+      <stop offset="1" stop-color="#003f24"/>
+    </linearGradient>
+    <radialGradient id="glow"><stop stop-color="#369466" stop-opacity=".38"/><stop offset="1" stop-color="#369466" stop-opacity="0"/></radialGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#002a17" flood-opacity=".34"/></filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#back)"/>
+  <circle cx="1020" cy="470" r="430" fill="url(#glow)"/>
+  <circle cx="1122" cy="112" r="155" fill="none" stroke="#c5a572" stroke-opacity=".23" stroke-width="2"/>
+  <circle cx="1122" cy="112" r="205" fill="none" stroke="#c5a572" stroke-opacity=".12" stroke-width="2"/>
+  <circle cx="95" cy="570" r="176" fill="none" stroke="#c5a572" stroke-opacity=".18" stroke-width="2"/>
+  <path d="M0 26h1200" stroke="#c5a572" stroke-width="9"/>
+  <path d="M0 601h1200" stroke="#c5a572" stroke-opacity=".55" stroke-width="2"/>
+  <g opacity=".18" stroke="#d8eedc" stroke-width="2">
+    <path d="M425 118h-61M425 152h-40M425 186h-61M425 220h-40M425 254h-61M425 288h-40M425 322h-61M425 356h-40M425 390h-61M425 424h-40"/>
+  </g>
+  <circle cx="229" cy="310" r="147" fill="#fafaf7" fill-opacity=".09"/>
+  <image x="99" y="180" width="260" height="260" xlink:href="site-mark.svg" filter="url(#shadow)"/>
+  <path d="M454 137v348" stroke="#c5a572" stroke-opacity=".75" stroke-width="3"/>
+  <text x="1100" y="142" text-anchor="start" direction="rtl" style="font-family:'SF Arabic','Geeza Pro',sans-serif;font-size:27px;font-weight:600;fill:#d8bd8f;letter-spacing:.3px">منشئ الجداول · الفصل الأول ١٤٤٨</text>
+  <text x="1100" y="246" text-anchor="start" direction="rtl" style="font-family:'SF Arabic','Geeza Pro',sans-serif;font-size:66px;font-weight:800;fill:#fffdf6">الشعب الدراسية</text>
+  <text x="1100" y="319" text-anchor="start" direction="rtl" style="font-family:'SF Arabic','Geeza Pro',sans-serif;font-size:52px;font-weight:700;fill:#fffdf6">جامعة الملك فيصل</text>
+  <text x="1100" y="378" text-anchor="end" style="font-family:Arial,sans-serif;font-size:39px;font-weight:700;fill:#e7d1a6">KFU Course Sections</text>
+  <path d="M690 408h410" stroke="#c5a572" stroke-opacity=".72" stroke-width="2"/>
+  <text x="1100" y="469" text-anchor="start" direction="rtl" style="font-family:'SF Arabic','Geeza Pro',sans-serif;font-size:31px;fill:#f5f7f1">ابحث عن شعبتك، وابنِ جدولك بسهولة</text>
+  <text x="1100" y="513" text-anchor="end" style="font-family:Arial,sans-serif;font-size:25px;fill:#d4e6d9">Find sections. Build your schedule.</text>
+  <text x="1100" y="576" text-anchor="end" style="font-family:Arial,sans-serif;font-size:20px;font-weight:600;fill:#c5a572">goodman6-dylan.github.io/kfu-course</text>
+</svg>

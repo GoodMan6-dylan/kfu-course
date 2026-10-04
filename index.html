@@ -5,6 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>الشعب الدراسية — جامعة الملك فيصل · 1448 | طلاب وطالبات</title>
 <meta name="description" content="منشئ الجدول الدراسي والشعب لجامعة الملك فيصل — الفصل الأول 1448">
+<meta property="og:title" content="الشعب الدراسية — جامعة الملك فيصل | KFU Course Sections">
+<meta property="og:description" content="ابحث عن شعبتك، وابنِ جدولك بسهولة. Find sections and build your schedule.">
+<meta property="og:image" content="https://goodman6-dylan.github.io/kfu-course/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="الشعب الدراسية لجامعة الملك فيصل | KFU Course Sections">
+<meta property="og:url" content="https://goodman6-dylan.github.io/kfu-course/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="الشعب الدراسية — جامعة الملك فيصل | KFU Course Sections">
+<meta name="twitter:description" content="ابحث عن شعبتك، وابنِ جدولك بسهولة. Find sections and build your schedule.">
+<meta name="twitter:image" content="https://goodman6-dylan.github.io/kfu-course/og-image.png">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<script>
+  // Set direction before the page paints. A visitor's explicit choice wins on later visits.
+  try {
+    const savedLanguage = localStorage.getItem('kfu_site_language');
+    window.KFU_INITIAL_LANGUAGE = (savedLanguage === 'ar' || savedLanguage === 'en')
+      ? savedLanguage
+      : (/^ar(?:-|$)/i.test(navigator.language || '') ? 'ar' : 'en');
+  } catch (_) {
+    window.KFU_INITIAL_LANGUAGE = /^ar(?:-|$)/i.test(navigator.language || '') ? 'ar' : 'en';
+  }
+  document.documentElement.lang = window.KFU_INITIAL_LANGUAGE;
+  document.documentElement.dir = window.KFU_INITIAL_LANGUAGE === 'en' ? 'ltr' : 'rtl';
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -116,6 +143,31 @@ body::before {
   gap: 1rem;
   margin-bottom: 0.5rem;
 }
+
+.language-toggle {
+  margin-inline-start: auto;
+  align-self: flex-start;
+  flex: 0 0 auto;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid rgba(255,255,255,0.7);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.15);
+  color: white;
+  font: 700 0.88rem system-ui, sans-serif;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+}
+.language-toggle:hover, .language-toggle:focus-visible { background: rgba(255,255,255,0.28); }
+@media (max-width: 600px) {
+  .brand-row { flex-wrap: wrap; }
+  .brand-text { flex: 1 1 calc(100% - 70px); }
+  .language-toggle { margin-inline-start: 0; }
+}
+[dir="ltr"] .selected-item, [dir="ltr"] .tt-block { border-right: 0; border-left: 3px solid var(--accent-color, var(--block-accent, var(--kfu-green))); }
+[dir="ltr"] .selected-item.has-conflict, [dir="ltr"] .tt-block.conflict { border-left-color: var(--closed); }
+[dir="ltr"] .filter-group input[type="search"] { background-position: left 0.75rem center; }
+[dir="ltr"] #aboutContent ul { padding-left: 1.25rem !important; padding-right: 0 !important; }
 
 .brand-mark {
   width: 48px;
@@ -433,20 +485,23 @@ main {
 
 @media (max-width: 900px) {
   .section-row {
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
     grid-template-areas:
-      "check status btn"
-      "info info info"
-      "time time time";
+      "check section status"
+      "check crn status"
+      "time time time"
+      "instr instr instr"
+      "info info info";
     gap: 0.4rem;
     padding: 0.85rem 1rem;
   }
+  .section-row .col-section { grid-area: section; }
+  .section-row .col-crn { grid-area: crn; }
   .section-row .col-status { grid-area: status; }
-  .section-row .col-add { grid-area: btn; }
   .section-row .col-check { grid-area: check; }
   .section-row .col-info { grid-area: info; display: flex; gap: 0.6rem; flex-wrap: wrap; }
   .section-row .col-time { grid-area: time; }
-  .col-section, .col-crn, .col-instr { display: contents; }
+  .section-row .col-instr { grid-area: instr; min-width: 0; }
 }
 
 .col-check input[type="checkbox"] {
@@ -825,27 +880,28 @@ footer a:hover { text-decoration: underline; }
 <header class="site-header">
   <div class="header-inner">
     <div class="brand-row">
-      <div class="brand-mark">ك‌ف</div>
+      <div class="brand-mark" data-i18n="brandMark">ك‌ف</div>
       <div class="brand-text">
-        <h1>الشعب الدراسية — جامعة الملك فيصل</h1>
-        <p>عرض الشعب وإنشاء الجدول الدراسي · فرع الأحساء · طلاب وطالبات</p>
+        <h1 data-i18n="siteHeading">الشعب الدراسية — جامعة الملك فيصل</h1>
+        <p data-i18n="siteSubtitle">عرض الشعب وإنشاء الجدول الدراسي · فرع الأحساء · طلاب وطالبات</p>
       </div>
+      <button class="language-toggle" id="languageToggle" type="button" aria-label="Switch to English" lang="en">English</button>
     </div>
-    <span class="term-badge" id="termBadge">الفصل الأول 1448 هـ · طلاب وطالبات</span>
+    <span class="term-badge" id="termBadge" data-i18n="termBadge">الفصل الأول 1448 هـ · طلاب وطالبات</span>
   </div>
 </header>
 
 <nav class="tabs-nav">
   <div class="tabs-inner">
     <button class="tab-btn active" data-tab="browse">
-      تصفح الشعب
+      <span data-i18n="browseTab">تصفح الشعب</span>
       <span class="tab-badge" id="totalCount">0</span>
     </button>
     <button class="tab-btn" data-tab="schedule">
-      جدولي الدراسي
+      <span data-i18n="scheduleTab">جدولي الدراسي</span>
       <span class="tab-badge" id="selectedCount">0</span>
     </button>
-    <button class="tab-btn" data-tab="about">عن الموقع</button>
+    <button class="tab-btn" data-tab="about"><span data-i18n="aboutTab">عن الموقع</span></button>
   </div>
 </nav>
 
@@ -855,55 +911,55 @@ footer a:hover { text-decoration: underline; }
     <div class="filters">
       <div class="filters-grid">
         <div class="filter-group filter-search">
-          <label for="searchInput">بحث (اسم المادة، رقم المقرر، CRN، أو اسم المدرس)</label>
-          <input type="search" id="searchInput" placeholder="مثلاً: ستاتيكا أو 2200-201 أو 27498">
+          <label for="searchInput" data-i18n="searchLabel">بحث (اسم المادة، رقم المقرر، CRN، أو اسم المدرس)</label>
+          <input type="search" id="searchInput" data-i18n-placeholder="searchPlaceholder" placeholder="مثلاً: ستاتيكا أو 2200-201 أو 27498">
         </div>
         <div class="filter-group">
-          <label for="collegeSelect">الكلية</label>
+          <label for="collegeSelect" data-i18n="collegeLabel">الكلية</label>
           <select id="collegeSelect">
-            <option value="">كل الكليات</option>
-            <option value="22">الهندسة (طلاب)</option>
-            <option value="22F">الهندسة (طالبات)</option>
-            <option value="08">العلوم (طلاب)</option>
-            <option value="08F">العلوم (طالبات)</option>
-            <option value="17">مركز اللغات (طلاب)</option>
-            <option value="17F">مركز اللغات (طالبات)</option>
+            <option value="" data-i18n="allColleges">كل الكليات</option>
+            <option value="22" data-college="22">الهندسة (طلاب)</option>
+            <option value="22F" data-college="22F">الهندسة (طالبات)</option>
+            <option value="08" data-college="08">العلوم (طلاب)</option>
+            <option value="08F" data-college="08F">العلوم (طالبات)</option>
+            <option value="17" data-college="17">مركز اللغات (طلاب)</option>
+            <option value="17F" data-college="17F">مركز اللغات (طالبات)</option>
           </select>
         </div>
         <div class="filter-group">
-          <label for="genderFilter">الجنس</label>
+          <label for="genderFilter" data-i18n="genderLabel">الجنس</label>
           <select id="genderFilter">
-            <option value="">الجميع</option>
-            <option value="M">طلاب</option>
-            <option value="F">طالبات</option>
+            <option value="" data-i18n="allGenders">الجميع</option>
+            <option value="M" data-i18n="men">طلاب</option>
+            <option value="F" data-i18n="women">طالبات</option>
           </select>
         </div>
         <div class="filter-group">
-          <label for="deptSelect">القسم</label>
+          <label for="deptSelect" data-i18n="departmentLabel">القسم</label>
           <select id="deptSelect">
             <option value="">كل الأقسام</option>
           </select>
         </div>
         <div class="filter-group">
-          <label for="dayFilter">اليوم</label>
+          <label for="dayFilter" data-i18n="dayLabel">اليوم</label>
           <select id="dayFilter">
-            <option value="">كل الأيام</option>
-            <option value="sun">الأحد</option>
-            <option value="mon">الإثنين</option>
-            <option value="tue">الثلاثاء</option>
-            <option value="wed">الأربعاء</option>
-            <option value="thu">الخميس</option>
+            <option value="" data-i18n="allDays">كل الأيام</option>
+            <option value="sun" data-day="sun">الأحد</option>
+            <option value="mon" data-day="mon">الإثنين</option>
+            <option value="tue" data-day="tue">الثلاثاء</option>
+            <option value="wed" data-day="wed">الأربعاء</option>
+            <option value="thu" data-day="thu">الخميس</option>
           </select>
         </div>
-        <button class="btn-reset" id="btnReset" type="button">↺ تصفير</button>
+        <button class="btn-reset" id="btnReset" type="button" data-i18n="reset">↺ تصفير</button>
       </div>
     </div>
 
     <div class="results-meta">
-      <div>عرض <strong id="resultCount">0</strong> من <strong id="totalSections">0</strong> شعبة</div>
+      <div><span data-i18n="showing">عرض</span> <strong id="resultCount">0</strong> <span data-i18n="of">من</span> <strong id="totalSections">0</strong> <span data-i18n="sections">شعبة</span></div>
       <div class="toggle-row">
-        <label><input type="checkbox" id="onlyAvailable"> الشعب المتاحة فقط</label>
-        <label><input type="checkbox" id="hideConflicts"> إخفاء المتعارض مع جدولي</label>
+        <label><input type="checkbox" id="onlyAvailable"> <span data-i18n="onlyAvailable">الشعب المتاحة فقط</span></label>
+        <label><input type="checkbox" id="hideConflicts"> <span data-i18n="hideConflicts">إخفاء المتعارض مع جدولي</span></label>
       </div>
     </div>
 
@@ -914,13 +970,13 @@ footer a:hover { text-decoration: underline; }
   <section class="tab-panel" id="tab-schedule">
     <div class="schedule-layout">
       <aside class="selected-list">
-        <h3>المواد المختارة <span class="count" id="selectedItemsCount">0</span></h3>
+        <h3><span data-i18n="selectedCourses">المواد المختارة</span> <span class="count" id="selectedItemsCount">0</span></h3>
         <div id="conflictBanner"></div>
         <div id="selectedItems"></div>
         <div class="schedule-actions">
-          <button class="btn btn-primary" id="btnPrint">🖨 طباعة</button>
-          <button class="btn btn-ghost" id="btnExport">📋 نسخ CRNs</button>
-          <button class="btn btn-danger" id="btnClear">حذف الكل</button>
+          <button class="btn btn-primary" id="btnPrint" data-i18n="print">🖨 طباعة</button>
+          <button class="btn btn-ghost" id="btnExport" data-i18n="copyCrns">📋 نسخ CRNs</button>
+          <button class="btn btn-danger" id="btnClear" data-i18n="clearAll">حذف الكل</button>
         </div>
       </aside>
       <div class="timetable">
@@ -931,7 +987,7 @@ footer a:hover { text-decoration: underline; }
 
   <!-- ABOUT TAB -->
   <section class="tab-panel" id="tab-about">
-    <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; max-width:720px; margin:0 auto;">
+    <div id="aboutContent" style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; max-width:720px; margin:0 auto;">
       <h2 style="font-family:'Tajawal',sans-serif; font-size:1.4rem; margin-bottom:1rem; color:var(--kfu-green-dark);">عن الموقع</h2>
       <p style="margin-bottom:1rem;">موقع غير رسمي لعرض الشعب الدراسية وإنشاء الجداول لجامعة الملك فيصل. البيانات مأخوذة من نظام بانر، وآخر تغيير فعلي فيها: <strong id="aboutUpdated">—</strong>.</p>
 
@@ -973,7 +1029,7 @@ footer a:hover { text-decoration: underline; }
 </main>
 
 <footer>
-  <p>صُنع بواسطة <strong>محمد القريني ومحمد الشواف</strong>، طلاب الهندسة الكهربائية والمدنية · جامعة الملك فيصل · <span id="lastUpdated">آخر تغيير في البيانات: —</span></p>
+  <p id="footerText">صُنع بواسطة <strong>محمد القريني ومحمد الشواف</strong>، طلاب الهندسة الكهربائية والمدنية · جامعة الملك فيصل · <span id="lastUpdated">آخر تغيير في البيانات: —</span></p>
 </footer>
 
 <div class="toast" id="toast"></div>
@@ -984,12 +1040,175 @@ footer a:hover { text-decoration: underline; }
 // APP STATE & DATA
 // ============================================================
 const DATA = KFU_DATA;
-const DAY_NAMES = { sun: 'الأحد', mon: 'الإثنين', tue: 'الثلاثاء', wed: 'الأربعاء', thu: 'الخميس' };
-const DAY_LETTERS = { sun: 'ح', mon: 'ن', tue: 'ث', wed: 'ر', thu: 'خ' };
+const DAY_NAMES = {
+  ar: { sun: 'الأحد', mon: 'الإثنين', tue: 'الثلاثاء', wed: 'الأربعاء', thu: 'الخميس' },
+  en: { sun: 'Sunday', mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday' },
+};
+const DAY_LETTERS = {
+  ar: { sun: 'ح', mon: 'ن', tue: 'ث', wed: 'ر', thu: 'خ' },
+  en: { sun: 'Sun', mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu' },
+};
 const DAYS_ORDER = ['sun', 'mon', 'tue', 'wed', 'thu'];
 const STORAGE_KEY = 'kfu_schedule_1448_t1';
-const STATUS_LABELS = { available: 'متاحة', full: 'ممتلئة', unavailable: 'غير متاحة' };
+const LANGUAGE_KEY = 'kfu_site_language';
+let currentLanguage = window.KFU_INITIAL_LANGUAGE || 'ar';
+const I18N = {
+  ar: {
+    title: 'الشعب الدراسية — جامعة الملك فيصل · 1448 | طلاب وطالبات',
+    description: 'منشئ الجدول الدراسي والشعب لجامعة الملك فيصل — الفصل الأول 1448',
+    brandMark: 'ك‌ف', siteHeading: 'الشعب الدراسية — جامعة الملك فيصل',
+    siteSubtitle: 'عرض الشعب وإنشاء الجدول الدراسي · فرع الأحساء · طلاب وطالبات',
+    termBadge: 'الفصل الأول 1448 هـ · طلاب وطالبات',
+    browseTab: 'تصفح الشعب', scheduleTab: 'جدولي الدراسي', aboutTab: 'عن الموقع',
+    searchLabel: 'بحث (اسم المادة، رقم المقرر، CRN، أو اسم المدرس)',
+    searchPlaceholder: 'مثلاً: ستاتيكا أو 2200-201 أو 27498',
+    collegeLabel: 'الكلية', allColleges: 'كل الكليات', genderLabel: 'الجنس',
+    allGenders: 'الجميع', men: 'طلاب', women: 'طالبات', departmentLabel: 'القسم',
+    allDepartments: 'كل الأقسام', dayLabel: 'اليوم', allDays: 'كل الأيام', reset: '↺ تصفير',
+    showing: 'عرض', of: 'من', sections: 'شعبة', onlyAvailable: 'الشعب المتاحة فقط',
+    hideConflicts: 'إخفاء المتعارض مع جدولي', selectedCourses: 'المواد المختارة',
+    print: '🖨 طباعة', copyCrns: '📋 نسخ CRNs', clearAll: 'حذف الكل',
+    statusAvailable: 'متاحة', statusFull: 'ممتلئة', statusUnavailable: 'غير متاحة',
+    noResultsTitle: 'لا توجد شعب مطابقة للبحث', noResultsHelp: 'جرّب تغيير الفلاتر أو استخدام كلمات بحث أخرى',
+    singleSection: 'شعبة', manySections: 'شعب', noTime: 'لا يوجد وقت محدد',
+    conflict: 'تعارض', conflictTitle: 'تعارض مع شعبة في جدولك',
+    creditHour: 'س', time: 'الوقت', section: 'شعبة',
+    noSelection: 'لا توجد مواد مختارة بعد. اذهب إلى تبويب «تصفح الشعب» وأضف ما تريد.',
+    conflictBanner: 'تعارض في الأوقات:', oneConflict: 'تعارض', manyConflicts: 'تعارضات',
+    with: 'مع', remove: 'إزالة', confirmRemove: 'إزالة هذه الشعبة من الجدول؟',
+    conflictToast: 'تنبيه: تعارض مع', inYourSchedule: 'في جدولك',
+    addedToast: 'تمت الإضافة إلى جدولك', confirmClear: 'حذف كل المواد من الجدول؟',
+    copied: 'تم نسخ', copyPrompt: 'انسخ هذا النص:',
+    updated: 'آخر تغيير في البيانات:', unknown: 'غير معروف',
+    types: { 'نظري': 'نظري', 'عملي': 'عملي', 'اختياري': 'اختياري', 'بحث': 'بحث', 'تدريب': 'تدريب' },
+  },
+  en: {
+    title: 'Course Sections — King Faisal University · 1448 | Men and Women',
+    description: 'Browse King Faisal University course sections and build your timetable — first semester 1448 AH',
+    brandMark: 'KFU', siteHeading: 'Course Sections — King Faisal University',
+    siteSubtitle: 'Browse sections and build your timetable · Al Ahsa campus · Men and Women',
+    termBadge: 'First semester 1448 AH · Men and Women',
+    browseTab: 'Browse sections', scheduleTab: 'My timetable', aboutTab: 'About',
+    searchLabel: 'Search (course name, course code, CRN, or instructor)',
+    searchPlaceholder: 'e.g. 2200-201 or 27498',
+    collegeLabel: 'College', allColleges: 'All colleges', genderLabel: 'Students',
+    allGenders: 'All students', men: 'Men', women: 'Women', departmentLabel: 'Department',
+    allDepartments: 'All departments', dayLabel: 'Day', allDays: 'All days', reset: '↺ Reset',
+    showing: 'Showing', of: 'of', sections: 'sections', onlyAvailable: 'Available only',
+    hideConflicts: 'Hide conflicts with my timetable', selectedCourses: 'Selected courses',
+    print: '🖨 Print', copyCrns: '📋 Copy CRNs', clearAll: 'Clear all',
+    statusAvailable: 'Available', statusFull: 'Full', statusUnavailable: 'Unavailable',
+    noResultsTitle: 'No matching sections', noResultsHelp: 'Try other filters or search terms',
+    singleSection: 'section', manySections: 'sections', noTime: 'No scheduled time',
+    conflict: 'Conflict', conflictTitle: 'Conflicts with a section in your timetable',
+    creditHour: 'credits', time: 'Time', section: 'Section',
+    noSelection: 'No courses selected yet. Open “Browse sections” to add some.',
+    conflictBanner: 'Time conflicts:', oneConflict: 'conflict', manyConflicts: 'conflicts',
+    with: 'with', remove: 'Remove', confirmRemove: 'Remove this section from your timetable?',
+    conflictToast: 'Warning: conflicts with', inYourSchedule: 'in your timetable',
+    addedToast: 'Added to your timetable', confirmClear: 'Remove all courses from your timetable?',
+    copied: 'Copied', copyPrompt: 'Copy this text:',
+    updated: 'Last data change:', unknown: 'Unknown',
+    types: { 'نظري': 'Lecture', 'عملي': 'Lab', 'اختياري': 'Elective', 'بحث': 'Research', 'تدريب': 'Training' },
+  },
+};
+
+const COLLEGE_EN = {
+  '22': 'Engineering (Men)', '22F': 'Engineering (Women)',
+  '08': 'Science (Men)', '08F': 'Science (Women)',
+  '17': 'Language Center (Men)', '17F': 'Language Center (Women)',
+};
+// Match the 46 current Banner department codes; unknown future codes retain their Banner label.
+const DEPARTMENT_EN = {
+  '0814': 'Physics (Service)', '0815': 'Chemistry (Service)', '0816': 'Biology (Service)', '0817': 'Mathematics (Service)',
+  '0824': 'Physics (Major)', '0825': 'Chemistry (Major)', '0826': 'Biology (Major)', '0827': 'Mathematics (Major)',
+  '0837': 'Mathematics and Statistics', '0844': 'Physics', '0845': 'Chemistry', '0846': 'Life Sciences', '0847': 'Mathematics and Statistics',
+  '08F14': 'Physics', '08F15': 'Chemistry', '08F16': 'Biology', '08F17': 'Mathematics',
+  '08F24': 'Physics (Major)', '08F25': 'Chemistry (Major)', '08F26': 'Biology (Major)', '08F27': 'Mathematics (Major)',
+  '08F37': 'Mathematics and Statistics', '08F44': 'Physics', '08F45': 'Chemistry', '08F46': 'Life Sciences', '08F47': 'Mathematics and Statistics',
+  '1700': 'Foreign Languages Center', '1701': 'Foreign Languages Center', '1722': 'Foreign Languages Center', '1723': 'Foreign Languages Center',
+  '17F00': 'Foreign Languages Center', '17F01': 'Foreign Languages Center', '17F22': 'Foreign Languages Center', '17F23': 'Foreign Languages Center',
+  '2200': 'General Engineering', '2201': 'Mechanical Engineering', '2202': 'Electrical Engineering',
+  '2203': 'Civil and Environmental Engineering', '2204': 'Chemical Engineering', '2220': 'General Engineering',
+  '22F00': 'General Engineering', '22F02': 'Electrical Engineering', '22F03': 'Civil and Environmental Engineering',
+  '22F04': 'Chemical Engineering', '22F06': 'Biomedical Engineering', '22F20': 'General Engineering',
+};
+
+function t(key) { return I18N[currentLanguage][key]; }
+function dayName(day) { return DAY_NAMES[currentLanguage][day] || day; }
+function dayShort(day) { return DAY_LETTERS[currentLanguage][day] || day; }
+function collegeName(code) { return currentLanguage === 'en' ? (COLLEGE_EN[code] || DATA.colleges[code] || code) : (DATA.colleges[code] || code); }
+function departmentName(code) { return currentLanguage === 'en' ? (DEPARTMENT_EN[code] || DATA.departments[code]?.name || code) : (DATA.departments[code]?.name || code); }
+function courseName(course) {
+  if (currentLanguage === 'ar') return course.name;
+  return course.name_en || `${course.name} · ${course.course}`;
+}
+function sectionType(type) { return t('types')[type] || type || ''; }
 const HTML_ENTITIES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+const ABOUT_AR_HTML = document.getElementById('aboutContent').innerHTML;
+const ABOUT_EN_HTML = `
+  <h2 style="font-family:inherit; font-size:1.4rem; margin-bottom:1rem; color:var(--kfu-green-dark);">About this site</h2>
+  <p style="margin-bottom:1rem;">An unofficial site to browse King Faisal University course sections and build a timetable. The data comes from Banner. Last actual data change: <strong id="aboutUpdated">—</strong>.</p>
+  <h3 style="font-size:1.05rem; margin:1rem 0 0.5rem; font-weight:700;">Features</h3>
+  <ul style="padding-inline-start:1.25rem; margin-bottom:1rem;">
+    <li>Browse sections with instant search</li>
+    <li>Filter by college, department, day, and availability</li>
+    <li>Build a visual timetable by selecting sections</li>
+    <li>Detect time conflicts automatically</li>
+    <li>Print the timetable or copy CRNs</li>
+    <li>Keep your timetable in this browser</li>
+  </ul>
+  <h3 style="font-size:1.05rem; margin:1rem 0 0.5rem; font-weight:700;">Available colleges</h3>
+  <ul style="padding-inline-start:1.25rem; margin-bottom:0.5rem;">
+    <li><strong>Engineering</strong> — Men (Mechanical, Electrical, Civil, Chemical)</li>
+    <li><strong>Science</strong> — Men (Physics, Chemistry, Biology, Mathematics; service and major courses)</li>
+    <li><strong>Language Center</strong> — Men (English)</li>
+    <li><strong>Engineering</strong> — Women (Electrical, Civil, Chemical, Biomedical)</li>
+    <li><strong>Science</strong> — Women (Physics, Chemistry, Biology, Mathematics; service and major courses)</li>
+    <li><strong>Language Center</strong> — Women (English)</li>
+  </ul>
+  <p style="font-size:0.88rem; color:var(--text-muted);">Men and women · Al Ahsa campus.</p>
+  <h3 style="font-size:1.05rem; margin:1rem 0 0.5rem; font-weight:700;">Day codes</h3>
+  <p style="font-variant-numeric:tabular-nums;">Sun: Sunday · Mon: Monday · Tue: Tuesday · Wed: Wednesday · Thu: Thursday</p>
+  <p style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--border); font-size:0.85rem; color:var(--text-muted);">
+    ⚠️ This is an unofficial site. For authoritative information, please use the <a href="https://services.kfu.edu.sa/Banner/" target="_blank" rel="noopener noreferrer" style="color:var(--kfu-green);">official Banner system</a>.
+  </p>`;
+
+function applyLanguage(nextLanguage, saveChoice = false) {
+  currentLanguage = nextLanguage === 'en' ? 'en' : 'ar';
+  document.documentElement.lang = currentLanguage;
+  document.documentElement.dir = currentLanguage === 'en' ? 'ltr' : 'rtl';
+  if (saveChoice) {
+    try { localStorage.setItem(LANGUAGE_KEY, currentLanguage); } catch (_) { /* Private browsing can block storage. */ }
+  }
+  document.title = t('title');
+  document.querySelector('meta[name="description"]').content = t('description');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+  document.querySelectorAll('[data-college]').forEach(el => {
+    const code = el.dataset.college;
+    el.textContent = currentLanguage === 'en' ? COLLEGE_EN[code] : ({
+      '22': 'الهندسة (طلاب)', '22F': 'الهندسة (طالبات)', '08': 'العلوم (طلاب)',
+      '08F': 'العلوم (طالبات)', '17': 'مركز اللغات (طلاب)', '17F': 'مركز اللغات (طالبات)',
+    })[code];
+  });
+  document.querySelectorAll('[data-day]').forEach(el => { el.textContent = dayName(el.dataset.day); });
+  const toggle = document.getElementById('languageToggle');
+  toggle.textContent = currentLanguage === 'en' ? 'العربية' : 'English';
+  toggle.lang = currentLanguage === 'en' ? 'ar' : 'en';
+  toggle.setAttribute('aria-label', currentLanguage === 'en' ? 'التبديل إلى العربية' : 'Switch to English');
+  document.getElementById('aboutContent').innerHTML = currentLanguage === 'en' ? ABOUT_EN_HTML : ABOUT_AR_HTML;
+  document.getElementById('footerText').innerHTML = currentLanguage === 'en'
+    ? 'Made by <strong>Mohammed Alquraini &amp; Mohammed Alshawaf</strong>, Electrical and Civil Engineering students · King Faisal University · <span id="lastUpdated"></span>'
+    : 'صُنع بواسطة <strong>محمد القريني ومحمد الشواف</strong>، طلاب الهندسة الكهربائية والمدنية · جامعة الملك فيصل · <span id="lastUpdated"></span>';
+  const updatedAt = formatUpdatedAt(DATA.meta.status_updated || DATA.meta.updated);
+  document.getElementById('aboutUpdated').textContent = updatedAt;
+  document.getElementById('lastUpdated').textContent = `${t('updated')} ${updatedAt}`;
+  populateDepartments();
+  rerenderAll();
+  document.dispatchEvent(new CustomEvent('kfu:languagechange', { detail: { language: currentLanguage } }));
+}
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, character => HTML_ENTITIES[character]);
@@ -1003,12 +1222,12 @@ function sectionStatus(status) {
 }
 
 function formatUpdatedAt(value) {
-  if (!value) return 'غير معروف';
+  if (!value) return t('unknown');
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   const options = { dateStyle: 'long', timeZone: 'Asia/Riyadh' };
   if (String(value).includes('T')) options.timeStyle = 'short';
-  return new Intl.DateTimeFormat('ar-SA-u-ca-gregory', options).format(date);
+  return new Intl.DateTimeFormat(currentLanguage === 'en' ? 'en-GB' : 'ar-SA-u-ca-gregory', options).format(date);
 }
 
 // Color palette for schedule blocks
@@ -1038,7 +1257,7 @@ try {
 }
 let selectedCRNs = new Set(savedCRNs.filter(crn => Object.hasOwn(SECTION_BY_CRN, crn)));
 if (selectedCRNs.size !== savedCRNs.length) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify([...selectedCRNs]));
+  persistSelection();
 }
 
 // Filters state
@@ -1047,8 +1266,13 @@ const filters = { q: '', college: '', dept: '', day: '', gender: '', onlyAvailab
 // ============================================================
 // HELPERS
 // ============================================================
+function persistSelection() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...selectedCRNs])); }
+  catch (_) { /* Keep the timetable in memory when storage is unavailable. */ }
+}
+
 function saveSelection() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify([...selectedCRNs]));
+  persistSelection();
   updateSelectedCount();
 }
 
@@ -1107,10 +1331,10 @@ function getConflictsFor(crn) {
 function populateDepartments() {
   const sel = document.getElementById('deptSelect');
   const college = filters.college;
-  const opts = [{ value: '', label: 'كل الأقسام' }];
+  const opts = [{ value: '', label: t('allDepartments') }];
   Object.entries(DATA.departments).forEach(([code, info]) => {
     if (!college || info.college === college) {
-      opts.push({ value: code, label: `${info.name} (${code})` });
+      opts.push({ value: code, label: `${departmentName(code)} (${code})` });
     }
   });
   sel.innerHTML = opts.map(o => `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`).join('');
@@ -1136,7 +1360,7 @@ function filterSections() {
     if (filters.onlyAvailable && sectionStatus(s.status) !== 'available') return false;
     if (filters.day && !s.meetings.some(m => m.days.includes(filters.day))) return false;
     if (q) {
-      const hay = (s.course + ' ' + s.crn + ' ' + s.name + ' ' + s.instructor).toLowerCase();
+      const hay = (s.course + ' ' + s.crn + ' ' + s.name + ' ' + (s.name_en || '') + ' ' + s.instructor + ' ' + departmentName(s.dept) + ' ' + collegeName(s.college)).toLowerCase();
       if (!hay.includes(q)) return false;
     }
     if (filters.hideConflicts && !selectedCRNs.has(s.crn) && getConflictsFor(s.crn).length > 0) return false;
@@ -1149,7 +1373,7 @@ function groupByCourse(sections) {
   for (const s of sections) {
     const key = `${s.college}|${s.dept}|${s.course}`;
     if (!groups.has(key)) {
-      groups.set(key, { course: s.course, name: s.name, college: s.college, dept: s.dept, sections: [] });
+      groups.set(key, { course: s.course, name: s.name, name_en: s.name_en, college: s.college, dept: s.dept, sections: [] });
     }
     groups.get(key).sections.push(s);
   }
@@ -1168,27 +1392,26 @@ function renderBrowse() {
     list.innerHTML = `
       <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <h3>لا توجد شعب مطابقة للبحث</h3>
-        <p>جرّب تغيير الفلاتر أو استخدام كلمات بحث أخرى</p>
+        <h3>${t('noResultsTitle')}</h3>
+        <p>${t('noResultsHelp')}</p>
       </div>`;
     return;
   }
 
   // Build HTML
   list.innerHTML = grouped.map(g => {
-    const dept = DATA.departments[g.dept];
-    const deptName = dept ? dept.name : g.dept;
+    const deptName = departmentName(g.dept);
     const collegeCode = g.college;
-    const collegeName = DATA.colleges[collegeCode] || '';
+    const collegeLabel = collegeName(collegeCode);
     return `
       <div class="course-group" data-course="${escapeHtml(g.course)}">
         <div class="course-header">
           <span class="course-code">${escapeHtml(g.course)}</span>
           <div>
-            <div class="course-name">${escapeHtml(g.name)}</div>
-            <div class="course-meta-text">${escapeHtml(collegeName)} · ${escapeHtml(deptName)}</div>
+            <div class="course-name" dir="auto">${escapeHtml(courseName(g))}</div>
+            <div class="course-meta-text">${escapeHtml(collegeLabel)} · ${escapeHtml(deptName)}</div>
           </div>
-          <span class="section-count">${g.sections.length} ${g.sections.length === 1 ? 'شعبة' : 'شعب'}</span>
+          <span class="section-count">${g.sections.length} ${g.sections.length === 1 ? t('singleSection') : t('manySections')}</span>
           <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
         </div>
         <div class="sections-container">
@@ -1208,10 +1431,10 @@ function renderSectionRow(s) {
   const status = sectionStatus(s.status);
 
   const meetings = s.meetings.length === 0
-    ? '<span style="color:var(--text-light); font-size:0.8rem;">لا يوجد وقت محدد</span>'
+    ? `<span style="color:var(--text-light); font-size:0.8rem;">${t('noTime')}</span>`
     : s.meetings.map(m => `
       <div class="meeting-time">
-        <div class="days">${m.days.map(d => `<span class="day-chip" title="${DAY_NAMES[d]}">${DAY_LETTERS[d]}</span>`).join('')}</div>
+        <div class="days">${m.days.map(d => `<span class="day-chip" title="${dayName(d)}">${dayShort(d)}</span>`).join('')}</div>
         <div>${fmtTime(m.time[0])} – ${fmtTime(m.time[1])}</div>
       </div>
     `).join('');
@@ -1225,15 +1448,15 @@ function renderSectionRow(s) {
       <div class="col-crn"><span class="crn-num">${escapeHtml(s.crn)}</span></div>
       <div class="col-status">
         <span class="status-pill ${status}">
-          ${STATUS_LABELS[status]}
+          ${t('status' + status[0].toUpperCase() + status.slice(1))}
         </span>
-        ${hasConflict ? '<span class="status-pill closed" title="تعارض مع شعبة في جدولك">⚠ تعارض</span>' : ''}
+        ${hasConflict ? `<span class="status-pill closed" title="${t('conflictTitle')}">⚠ ${t('conflict')}</span>` : ''}
       </div>
       <div class="col-time">${meetings}</div>
       <div class="col-instr" title="${escapeHtml(s.instructor || '')}">${escapeHtml(s.instructor || '—')}</div>
       <div class="col-info">
-        <span class="type-tag">${escapeHtml(s.type || '')}</span>
-        ${s.credits ? `<span class="type-tag">${escapeHtml(s.credits)} س</span>` : ''}
+        <span class="type-tag">${escapeHtml(sectionType(s.type))}</span>
+        ${s.credits ? `<span class="type-tag">${escapeHtml(s.credits)} ${t('creditHour')}</span>` : ''}
       </div>
     </div>
   `;
@@ -1263,9 +1486,9 @@ function renderTimetable() {
   const colHeight = totalMins * pxPerMin;
 
   // Build header
-  let html = '<div class="tt-corner">الوقت</div>';
+  let html = `<div class="tt-corner">${t('time')}</div>`;
   for (const d of DAYS_ORDER) {
-    html += `<div class="tt-day-header">${DAY_NAMES[d]}</div>`;
+    html += `<div class="tt-day-header">${dayName(d)}</div>`;
   }
   // Build hourly rows: time label + 5 day cells, but easier: do separate column structure with time labels and absolute blocks
   // Use a single multi-row layout:
@@ -1297,9 +1520,9 @@ function renderTimetable() {
 
   let html2 = '';
   // Header row
-  html2 += '<div class="tt-corner">الوقت</div>';
+  html2 += `<div class="tt-corner">${t('time')}</div>`;
   for (const d of DAYS_ORDER) {
-    html2 += `<div class="tt-day-header">${DAY_NAMES[d]}</div>`;
+    html2 += `<div class="tt-day-header">${dayName(d)}</div>`;
   }
 
   // Body row: time labels column + 5 day columns
@@ -1331,8 +1554,8 @@ function renderTimetable() {
           <div class="tt-block ${isConflict ? 'conflict' : ''}"
                style="top:${top}px; height:${height-2}px; --block-bg:${palette.bg}; --block-fg:${palette.fg}; --block-accent:${palette.accent};"
                data-crn="${escapeHtml(s.crn)}"
-               title="${escapeHtml(`${s.name} · ${s.course} · شعبة ${s.section} · CRN ${s.crn}`)}">
-            <div class="tt-block-name">${escapeHtml(s.name)}</div>
+               title="${escapeHtml(`${courseName(s)} · ${t('section')} ${s.section} · CRN ${s.crn}`)}">
+            <div class="tt-block-name" dir="auto">${escapeHtml(courseName(s))}</div>
             <div class="tt-block-meta">${escapeHtml(s.course)} · ${escapeHtml(s.section)}</div>
             <div class="tt-block-meta">${fmtTime(m.time[0])}–${fmtTime(m.time[1])}</div>
             ${s.instructor ? `<div class="tt-block-meta" style="opacity:0.8;font-size:0.7rem;">${escapeHtml(s.instructor)}</div>` : ""}
@@ -1351,7 +1574,7 @@ function renderSelectedList() {
   const list = document.getElementById('selectedItems');
   const sel = [...selectedCRNs].map(c => SECTION_BY_CRN[c]).filter(Boolean);
   if (sel.length === 0) {
-    list.innerHTML = '<div class="selected-empty">لا توجد مواد مختارة بعد. اذهب إلى تبويب «تصفح الشعب» وأضف ما تريد.</div>';
+    list.innerHTML = `<div class="selected-empty">${t('noSelection')}</div>`;
     document.getElementById('conflictBanner').innerHTML = '';
     return;
   }
@@ -1368,9 +1591,9 @@ function renderSelectedList() {
       <div class="conflict-banner">
         <span>⚠</span>
         <div>
-          <strong>تعارض في الأوقات:</strong> ${conflictPairs.length} ${conflictPairs.length === 1 ? 'تعارض' : 'تعارضات'}
+          <strong>${t('conflictBanner')}</strong> ${conflictPairs.length} ${conflictPairs.length === 1 ? t('oneConflict') : t('manyConflicts')}
           <div style="font-size:0.78rem; margin-top:0.25rem;">
-            ${conflictPairs.slice(0,3).map(p => `${escapeHtml(p[0].course)} مع ${escapeHtml(p[1].course)}`).join(' · ')}
+            ${conflictPairs.slice(0,3).map(p => `${escapeHtml(p[0].course)} ${t('with')} ${escapeHtml(p[1].course)}`).join(' · ')}
           </div>
         </div>
       </div>`;
@@ -1382,18 +1605,18 @@ function renderSelectedList() {
     const palette = PALETTE[idx % PALETTE.length];
     const hasConflict = conflictPairs.some(p => p[0].crn === s.crn || p[1].crn === s.crn);
     const meetings = s.meetings.map(m =>
-      m.days.map(d => DAY_LETTERS[d]).join(' ') + ' ' + fmtTime(m.time[0]) + '–' + fmtTime(m.time[1])
+      m.days.map(d => dayShort(d)).join(' ') + ' ' + fmtTime(m.time[0]) + '–' + fmtTime(m.time[1])
     ).join(' · ');
     return `
       <div class="selected-item ${hasConflict ? 'has-conflict' : ''}" style="--accent-color:${palette.accent};">
         <div class="selected-item-info">
-          <div class="selected-item-name">${escapeHtml(s.name)}</div>
+          <div class="selected-item-name" dir="auto">${escapeHtml(courseName(s))}</div>
           <div class="selected-item-meta">
-            ${escapeHtml(s.course)} · شعبة ${escapeHtml(s.section)} · CRN ${escapeHtml(s.crn)}<br>
+            ${escapeHtml(s.course)} · ${t('section')} ${escapeHtml(s.section)} · CRN ${escapeHtml(s.crn)}<br>
             ${escapeHtml(meetings)}
           </div>
         </div>
-        <button class="btn-remove" data-action="remove" data-crn="${escapeHtml(s.crn)}" title="إزالة">
+        <button class="btn-remove" data-action="remove" data-crn="${escapeHtml(s.crn)}" title="${t('remove')}" aria-label="${t('remove')}">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
@@ -1439,7 +1662,7 @@ document.addEventListener('click', (e) => {
   // Block click in timetable -> remove
   const block = e.target.closest('.tt-block');
   if (block) {
-    if (confirm('إزالة هذه الشعبة من الجدول؟')) {
+    if (confirm(t('confirmRemove'))) {
       selectedCRNs.delete(block.dataset.crn);
       saveSelection();
       rerenderAll();
@@ -1455,9 +1678,9 @@ document.addEventListener('change', (e) => {
       selectedCRNs.add(crn);
       const conflicts = getConflictsFor(crn);
       if (conflicts.length > 0) {
-        showToast(`⚠ تنبيه: تعارض مع ${conflicts.length} ${conflicts.length === 1 ? 'شعبة' : 'شعب'} في جدولك`);
+        showToast(`⚠ ${t('conflictToast')} ${conflicts.length} ${conflicts.length === 1 ? t('singleSection') : t('manySections')} ${t('inYourSchedule')}`);
       } else {
-        showToast('تمت الإضافة إلى جدولك');
+        showToast(t('addedToast'));
       }
     } else {
       selectedCRNs.delete(crn);
@@ -1515,7 +1738,7 @@ document.getElementById('btnReset').addEventListener('click', () => {
 document.getElementById('btnPrint').addEventListener('click', () => window.print());
 document.getElementById('btnClear').addEventListener('click', () => {
   if (selectedCRNs.size === 0) return;
-  if (confirm('حذف كل المواد من الجدول؟')) {
+  if (confirm(t('confirmClear'))) {
     selectedCRNs.clear();
     saveSelection();
     rerenderAll();
@@ -1523,24 +1746,24 @@ document.getElementById('btnClear').addEventListener('click', () => {
 });
 document.getElementById('btnExport').addEventListener('click', async () => {
   const sel = [...selectedCRNs].map(c => SECTION_BY_CRN[c]).filter(Boolean);
-  const text = sel.map(s => `${s.crn}\t${s.course}\t${s.section}\t${s.name}`).join('\n');
+  const text = sel.map(s => `${s.crn}\t${s.course}\t${s.section}\t${s.name_en && currentLanguage === 'en' ? s.name_en : s.name}`).join('\n');
   try {
     await navigator.clipboard.writeText(text);
-    showToast(`✓ تم نسخ ${sel.length} CRN`);
+    showToast(`✓ ${t('copied')} ${sel.length} CRN`);
   } catch {
-    prompt('انسخ هذا النص:', text);
+    prompt(t('copyPrompt'), text);
   }
+});
+
+document.getElementById('languageToggle').addEventListener('click', () => {
+  applyLanguage(currentLanguage === 'en' ? 'ar' : 'en', true);
 });
 
 // ============================================================
 // INIT
 // ============================================================
-const updatedAt = formatUpdatedAt(DATA.meta.status_updated || DATA.meta.updated);
-document.getElementById('aboutUpdated').textContent = updatedAt;
-document.getElementById('lastUpdated').textContent = `آخر تغيير في البيانات: ${updatedAt}`;
-populateDepartments();
 updateSelectedCount();
-renderBrowse();
+applyLanguage(currentLanguage);
 </script>
 </body>
 </html>

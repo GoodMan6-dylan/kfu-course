@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">رمز الشعب الدراسية</title>
+  <desc id="desc">تقويم دراسي داخل دائرة خضراء بإطار ذهبي</desc>
+  <defs>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#087746"/>
+      <stop offset="1" stop-color="#004d24"/>
+    </linearGradient>
+  </defs>
+  <circle cx="128" cy="128" r="119" fill="url(#green)"/>
+  <circle cx="128" cy="128" r="113" fill="none" stroke="#c5a572" stroke-width="7"/>
+  <rect x="56" y="72" width="144" height="127" rx="17" fill="#fffdf6"/>
+  <path d="M56 89a17 17 0 0 1 17-17h110a17 17 0 0 1 17 17v23H56V89Z" fill="#c5a572"/>
+  <path d="M91 63v24M165 63v24" fill="none" stroke="#fffdf6" stroke-linecap="round" stroke-width="11"/>
+  <path d="M84 140h36M84 166h36M142 140h30M142 166h30" fill="none" stroke="#006c35" stroke-linecap="round" stroke-width="10"/>
+  <circle cx="128" cy="229" r="4" fill="#c5a572"/>
+</svg>
