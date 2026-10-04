@@ -2,9 +2,10 @@
 """Rebuild KFU sections from the six public Banner pages.
 
 The server timer calls this script after updating its Git checkout. The script
-only writes data.js; Git commit/push and repeated-failure alerts belong to the
-server runner. Exit codes: 0 = all pages valid, 2 = one or more pages failed
-(their previous sections were retained), 3 = safety abort (nothing written).
+writes data.js only when the data changes, and writes check-status.json after
+each safe completed check. Git commit/push and repeated-failure alerts belong
+to the server runner. Exit codes: 0 = all pages valid, 2 = one or more pages
+failed (their previous sections were retained), 3 = safety abort (nothing written).
 """
 
 from __future__ import annotations
@@ -460,6 +461,22 @@ def write_data(path: Path, data: dict) -> None:
             os.unlink(temp_name)
 
 
+def write_check_status(path: Path, status: dict) -> None:
+    """Atomically publish a small, separate record of the latest safe check."""
+    body = json.dumps(status, ensure_ascii=False, separators=(",", ":")) + "\n"
+    fd, temp_name = tempfile.mkstemp(prefix=".check-status-", suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as output:
+            output.write(body)
+            output.flush()
+            os.fsync(output.fileno())
+        os.chmod(temp_name, path.stat().st_mode & 0o777 if path.exists() else 0o644)
+        os.replace(temp_name, path)
+    finally:
+        if os.path.exists(temp_name):
+            os.unlink(temp_name)
+
+
 def term_label() -> str:
     label = {"10": "الفصل الأول", "20": "الفصل الثاني", "30": "الفصل الصيفي"}.get(
         TERM_CODE[-2:], f"الفصل {TERM_CODE[-2:]}"
@@ -559,8 +576,9 @@ def update(repo_root: Path, dry_run: bool = False) -> int:
         len(old_sections), len(next_sections), added, removed, status_changed,
         len(valid_pages), len(failed_pages), changed,
     )
+    checked_at = datetime.now(RIYADH_TZ)
     if changed:
-        now = datetime.now(RIYADH_TZ)
+        now = checked_at
         next_data["meta"]["status_updated"] = now.isoformat(timespec="seconds")
         next_data["meta"]["updated"] = now.date().isoformat()
         if dry_run:
@@ -568,6 +586,19 @@ def update(repo_root: Path, dry_run: bool = False) -> int:
         else:
             write_data(path, next_data)
             logging.info("wrote %s", path)
+    check_status = {
+        "checked_at": checked_at.isoformat(timespec="seconds"),
+        "result": "partial" if failed_pages else "success",
+        "valid_pages": len(valid_pages),
+        "total_pages": len(PAGES),
+        "sections_count": len(next_sections),
+    }
+    if dry_run:
+        logging.info("dry run: check-status.json not written")
+    else:
+        check_status_path = repo_root / "check-status.json"
+        write_check_status(check_status_path, check_status)
+        logging.info("wrote %s (%s)", check_status_path, check_status["result"])
     if failed_pages:
         logging.warning("partial Banner refresh; failed pages: %s", ", ".join(failed_pages))
         return 2

@@ -96,8 +96,8 @@ case "$updater_status" in
     ;;
   3)
     record_failure 'Banner safety abort'
-    if ! git diff --quiet -- data.js; then
-      printf '%s\n' 'ERROR: updater changed data.js during a safety abort; leaving it untouched for inspection.' >&2
+    if ! git diff --quiet -- data.js check-status.json; then
+      printf '%s\n' 'ERROR: updater changed a published file during a safety abort; leaving it untouched for inspection.' >&2
     fi
     exit 3
     ;;
@@ -108,14 +108,22 @@ case "$updater_status" in
 esac
 
 git add -- data.js
-if ! git diff --cached --quiet -- data.js; then
-  if ! git commit -m 'Update KFU Banner sections'; then
+if [[ -f check-status.json ]]; then
+  git add -- check-status.json
+fi
+if ! git diff --cached --quiet -- data.js check-status.json; then
+  if git diff --cached --quiet -- data.js; then
+    commit_message='Record KFU Banner check'
+  else
+    commit_message='Update KFU Banner sections'
+  fi
+  if ! git commit -m "$commit_message"; then
     record_failure 'Git commit'
     exit 1
   fi
-  printf '%s\n' 'INFO: committed changed data.js.'
+  printf 'INFO: committed %s.\n' "$commit_message"
 else
-  printf '%s\n' 'INFO: Banner data is unchanged; no commit created.'
+  printf '%s\n' 'INFO: Banner data and check status are unchanged; no commit created.'
 fi
 
 if [[ "$(git rev-list --count origin/main..HEAD)" != 0 ]]; then
