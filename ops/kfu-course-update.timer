@@ -1,0 +1,11 @@
+[Unit]
+Description=Run KFU Banner refresh every 20 minutes
+
+[Timer]
+OnCalendar=*-*-* *:00,20,40:00
+Persistent=true
+AccuracySec=1min
+Unit=kfu-course-update.service
+
+[Install]
+WantedBy=timers.target

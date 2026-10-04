@@ -37,6 +37,10 @@
   --radius-sm: 6px;
   --available: #2e7d4f;
   --available-bg: #e8f5ee;
+  --full: #965500;
+  --full-bg: #fff3d6;
+  --unavailable: #b53d3d;
+  --unavailable-bg: #fbebeb;
   --closed: #b53d3d;
   --closed-bg: #fbebeb;
   --conflict: #d97706;
@@ -425,7 +429,7 @@ main {
 .section-row.selected { background: var(--selected-bg); }
 .section-row.selected:hover { background: #fff0c8; }
 
-.section-row.closed { opacity: 0.55; }
+.section-row.unavailable { opacity: 0.75; }
 
 @media (max-width: 900px) {
   .section-row {
@@ -477,6 +481,8 @@ main {
   white-space: nowrap;
 }
 .status-pill.available { background: var(--available-bg); color: var(--available); }
+.status-pill.full { background: var(--full-bg); color: var(--full); }
+.status-pill.unavailable { background: var(--unavailable-bg); color: var(--unavailable); }
 .status-pill.closed { background: var(--closed-bg); color: var(--closed); }
 .status-pill::before {
   content: '';
@@ -860,7 +866,8 @@ footer a:hover { text-decoration: underline; }
             <option value="22F">الهندسة (طالبات)</option>
             <option value="08">العلوم (طلاب)</option>
             <option value="08F">العلوم (طالبات)</option>
-            <option value="09">علوم الحاسب وتقنية المعلومات</option>
+            <option value="17">مركز اللغات (طلاب)</option>
+            <option value="17F">مركز اللغات (طالبات)</option>
           </select>
         </div>
         <div class="filter-group">
@@ -926,7 +933,7 @@ footer a:hover { text-decoration: underline; }
   <section class="tab-panel" id="tab-about">
     <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; max-width:720px; margin:0 auto;">
       <h2 style="font-family:'Tajawal',sans-serif; font-size:1.4rem; margin-bottom:1rem; color:var(--kfu-green-dark);">عن الموقع</h2>
-      <p style="margin-bottom:1rem;">موقع غير رسمي لعرض الشعب الدراسية وإنشاء الجداول لجامعة الملك فيصل. البيانات مأخوذة من نظام تسجيل الجامعة في تاريخ <strong>25 أبريل 2026</strong>.</p>
+      <p style="margin-bottom:1rem;">موقع غير رسمي لعرض الشعب الدراسية وإنشاء الجداول لجامعة الملك فيصل. البيانات مأخوذة من نظام بانر، وآخر تغيير فعلي فيها: <strong id="aboutUpdated">—</strong>.</p>
 
       <h3 style="font-size:1.05rem; margin:1rem 0 0.5rem; font-weight:700;">المميزات</h3>
       <ul style="padding-right:1.25rem; margin-bottom:1rem;">
@@ -942,9 +949,10 @@ footer a:hover { text-decoration: underline; }
       <ul style="padding-right:1.25rem; margin-bottom:0.5rem;">
         <li><strong>الهندسة</strong> — طلاب (ميكانيكية، كهربائية، مدنية، كيميائية)</li>
         <li><strong>العلوم</strong> — طلاب (فيزياء، كيمياء، أحياء، رياضيات — خدمي وتخصص)</li>
+        <li><strong>مركز اللغات</strong> — طلاب (اللغة الإنجليزية)</li>
         <li><strong>الهندسة</strong> — طالبات (كهربائية، مدنية، كيميائية، طبية حيوية)</li>
         <li><strong>العلوم</strong> — طالبات (فيزياء، كيمياء، أحياء، رياضيات — خدمي وتخصص)</li>
-        <li><strong>علوم الحاسب وتقنية المعلومات</strong> — طالبات (CS، IS، CE، شبكات)</li>
+        <li><strong>مركز اللغات</strong> — طالبات (اللغة الإنجليزية)</li>
       </ul>
       <p style="font-size:0.88rem; color:var(--text-muted);">الجنس: طلاب وطالبات — الأحساء.</p>
 
@@ -965,7 +973,7 @@ footer a:hover { text-decoration: underline; }
 </main>
 
 <footer>
-  <p>صُنع بواسطة <strong>محمد القريني ومحمد الشواف</strong>، طلاب الهندسة الكهربائية والمدنية · جامعة الملك فيصل · <a href="#" id="lastUpdated">تحديث: 25 أبريل 2026</a></p>
+  <p>صُنع بواسطة <strong>محمد القريني ومحمد الشواف</strong>، طلاب الهندسة الكهربائية والمدنية · جامعة الملك فيصل · <span id="lastUpdated">آخر تغيير في البيانات: —</span></p>
 </footer>
 
 <div class="toast" id="toast"></div>
@@ -980,6 +988,28 @@ const DAY_NAMES = { sun: 'الأحد', mon: 'الإثنين', tue: 'الثلاث
 const DAY_LETTERS = { sun: 'ح', mon: 'ن', tue: 'ث', wed: 'ر', thu: 'خ' };
 const DAYS_ORDER = ['sun', 'mon', 'tue', 'wed', 'thu'];
 const STORAGE_KEY = 'kfu_schedule_1448_t1';
+const STATUS_LABELS = { available: 'متاحة', full: 'ممتلئة', unavailable: 'غير متاحة' };
+const HTML_ENTITIES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, character => HTML_ENTITIES[character]);
+}
+
+function sectionStatus(status) {
+  // Keep saved data from the original 1/0 format readable during the transition.
+  if (status === 1 || status === true || status === 'available') return 'available';
+  if (status === 'full') return 'full';
+  return 'unavailable';
+}
+
+function formatUpdatedAt(value) {
+  if (!value) return 'غير معروف';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  const options = { dateStyle: 'long', timeZone: 'Asia/Riyadh' };
+  if (String(value).includes('T')) options.timeStyle = 'short';
+  return new Intl.DateTimeFormat('ar-SA-u-ca-gregory', options).format(date);
+}
 
 // Color palette for schedule blocks
 const PALETTE = [
@@ -998,8 +1028,18 @@ const PALETTE = [
 // Build a lookup: section by CRN
 const SECTION_BY_CRN = Object.fromEntries(DATA.sections.map(s => [s.crn, s]));
 
-// Selected sections (persisted)
-let selectedCRNs = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
+// Remove selections for sections that disappeared from the current Banner data.
+let savedCRNs = [];
+try {
+  const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  if (Array.isArray(parsed)) savedCRNs = parsed;
+} catch (_) {
+  // Ignore a damaged value in local storage and start with an empty schedule.
+}
+let selectedCRNs = new Set(savedCRNs.filter(crn => Object.hasOwn(SECTION_BY_CRN, crn)));
+if (selectedCRNs.size !== savedCRNs.length) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([...selectedCRNs]));
+}
 
 // Filters state
 const filters = { q: '', college: '', dept: '', day: '', gender: '', onlyAvailable: false, hideConflicts: false };
@@ -1073,7 +1113,7 @@ function populateDepartments() {
       opts.push({ value: code, label: `${info.name} (${code})` });
     }
   });
-  sel.innerHTML = opts.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+  sel.innerHTML = opts.map(o => `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`).join('');
   if (!opts.some(o => o.value === filters.dept)) {
     filters.dept = '';
   }
@@ -1093,7 +1133,7 @@ function filterSections() {
       if (filters.gender === 'F' && !isF) return false;
     }
     if (filters.dept && s.dept !== filters.dept) return false;
-    if (filters.onlyAvailable && !s.status) return false;
+    if (filters.onlyAvailable && sectionStatus(s.status) !== 'available') return false;
     if (filters.day && !s.meetings.some(m => m.days.includes(filters.day))) return false;
     if (q) {
       const hay = (s.course + ' ' + s.crn + ' ' + s.name + ' ' + s.instructor).toLowerCase();
@@ -1107,10 +1147,11 @@ function filterSections() {
 function groupByCourse(sections) {
   const groups = new Map();
   for (const s of sections) {
-    if (!groups.has(s.course)) {
-      groups.set(s.course, { course: s.course, name: s.name, dept: s.dept, sections: [] });
+    const key = `${s.college}|${s.dept}|${s.course}`;
+    if (!groups.has(key)) {
+      groups.set(key, { course: s.course, name: s.name, college: s.college, dept: s.dept, sections: [] });
     }
-    groups.get(s.course).sections.push(s);
+    groups.get(key).sections.push(s);
   }
   return [...groups.values()];
 }
@@ -1137,15 +1178,15 @@ function renderBrowse() {
   list.innerHTML = grouped.map(g => {
     const dept = DATA.departments[g.dept];
     const deptName = dept ? dept.name : g.dept;
-    const collegeCode = dept ? dept.college : '';
+    const collegeCode = g.college;
     const collegeName = DATA.colleges[collegeCode] || '';
     return `
-      <div class="course-group" data-course="${g.course}">
+      <div class="course-group" data-course="${escapeHtml(g.course)}">
         <div class="course-header">
-          <span class="course-code">${g.course}</span>
+          <span class="course-code">${escapeHtml(g.course)}</span>
           <div>
-            <div class="course-name">${g.name}</div>
-            <div class="course-meta-text">${collegeName} · ${deptName}</div>
+            <div class="course-name">${escapeHtml(g.name)}</div>
+            <div class="course-meta-text">${escapeHtml(collegeName)} · ${escapeHtml(deptName)}</div>
           </div>
           <span class="section-count">${g.sections.length} ${g.sections.length === 1 ? 'شعبة' : 'شعب'}</span>
           <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
@@ -1164,6 +1205,7 @@ function renderSectionRow(s) {
   const isSelected = selectedCRNs.has(s.crn);
   const conflicts = getConflictsFor(s.crn);
   const hasConflict = conflicts.length > 0 && !isSelected;
+  const status = sectionStatus(s.status);
 
   const meetings = s.meetings.length === 0
     ? '<span style="color:var(--text-light); font-size:0.8rem;">لا يوجد وقت محدد</span>'
@@ -1175,23 +1217,23 @@ function renderSectionRow(s) {
     `).join('');
 
   return `
-    <div class="section-row ${s.status ? '' : 'closed'} ${isSelected ? 'selected' : ''}" data-crn="${s.crn}">
+    <div class="section-row ${status === 'unavailable' ? 'unavailable' : ''} ${isSelected ? 'selected' : ''}" data-crn="${escapeHtml(s.crn)}">
       <div class="col-check">
-        <input type="checkbox" data-action="toggle" data-crn="${s.crn}" ${isSelected ? 'checked' : ''} ${(!s.status && !isSelected) ? '' : ''}>
+        <input type="checkbox" data-action="toggle" data-crn="${escapeHtml(s.crn)}" ${isSelected ? 'checked' : ''}>
       </div>
-      <div class="col-section"><span class="section-num">${s.section}</span></div>
-      <div class="col-crn"><span class="crn-num">${s.crn}</span></div>
+      <div class="col-section"><span class="section-num">${escapeHtml(s.section)}</span></div>
+      <div class="col-crn"><span class="crn-num">${escapeHtml(s.crn)}</span></div>
       <div class="col-status">
-        <span class="status-pill ${s.status ? 'available' : 'closed'}">
-          ${s.status ? 'متاحة' : 'مغلقة'}
+        <span class="status-pill ${status}">
+          ${STATUS_LABELS[status]}
         </span>
         ${hasConflict ? '<span class="status-pill closed" title="تعارض مع شعبة في جدولك">⚠ تعارض</span>' : ''}
       </div>
       <div class="col-time">${meetings}</div>
-      <div class="col-instr" title="${s.instructor || ''}">${s.instructor || '—'}</div>
+      <div class="col-instr" title="${escapeHtml(s.instructor || '')}">${escapeHtml(s.instructor || '—')}</div>
       <div class="col-info">
-        <span class="type-tag">${s.type || ''}</span>
-        ${s.credits ? `<span class="type-tag">${s.credits} س</span>` : ''}
+        <span class="type-tag">${escapeHtml(s.type || '')}</span>
+        ${s.credits ? `<span class="type-tag">${escapeHtml(s.credits)} س</span>` : ''}
       </div>
     </div>
   `;
@@ -1288,12 +1330,12 @@ function renderTimetable() {
         dayHTML += `
           <div class="tt-block ${isConflict ? 'conflict' : ''}"
                style="top:${top}px; height:${height-2}px; --block-bg:${palette.bg}; --block-fg:${palette.fg}; --block-accent:${palette.accent};"
-               data-crn="${s.crn}"
-               title="${s.name} · ${s.course} · شعبة ${s.section} · CRN ${s.crn}">
-            <div class="tt-block-name">${s.name}</div>
-            <div class="tt-block-meta">${s.course} · ${s.section}</div>
+               data-crn="${escapeHtml(s.crn)}"
+               title="${escapeHtml(`${s.name} · ${s.course} · شعبة ${s.section} · CRN ${s.crn}`)}">
+            <div class="tt-block-name">${escapeHtml(s.name)}</div>
+            <div class="tt-block-meta">${escapeHtml(s.course)} · ${escapeHtml(s.section)}</div>
             <div class="tt-block-meta">${fmtTime(m.time[0])}–${fmtTime(m.time[1])}</div>
-            ${s.instructor ? `<div class="tt-block-meta" style="opacity:0.8;font-size:0.7rem;">${s.instructor}</div>` : ""}
+            ${s.instructor ? `<div class="tt-block-meta" style="opacity:0.8;font-size:0.7rem;">${escapeHtml(s.instructor)}</div>` : ""}
           </div>
         `;
       }
@@ -1328,7 +1370,7 @@ function renderSelectedList() {
         <div>
           <strong>تعارض في الأوقات:</strong> ${conflictPairs.length} ${conflictPairs.length === 1 ? 'تعارض' : 'تعارضات'}
           <div style="font-size:0.78rem; margin-top:0.25rem;">
-            ${conflictPairs.slice(0,3).map(p => `${p[0].course} مع ${p[1].course}`).join(' · ')}
+            ${conflictPairs.slice(0,3).map(p => `${escapeHtml(p[0].course)} مع ${escapeHtml(p[1].course)}`).join(' · ')}
           </div>
         </div>
       </div>`;
@@ -1345,13 +1387,13 @@ function renderSelectedList() {
     return `
       <div class="selected-item ${hasConflict ? 'has-conflict' : ''}" style="--accent-color:${palette.accent};">
         <div class="selected-item-info">
-          <div class="selected-item-name">${s.name}</div>
+          <div class="selected-item-name">${escapeHtml(s.name)}</div>
           <div class="selected-item-meta">
-            ${s.course} · شعبة ${s.section} · CRN ${s.crn}<br>
-            ${meetings}
+            ${escapeHtml(s.course)} · شعبة ${escapeHtml(s.section)} · CRN ${escapeHtml(s.crn)}<br>
+            ${escapeHtml(meetings)}
           </div>
         </div>
-        <button class="btn-remove" data-action="remove" data-crn="${s.crn}" title="إزالة">
+        <button class="btn-remove" data-action="remove" data-crn="${escapeHtml(s.crn)}" title="إزالة">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
@@ -1493,6 +1535,9 @@ document.getElementById('btnExport').addEventListener('click', async () => {
 // ============================================================
 // INIT
 // ============================================================
+const updatedAt = formatUpdatedAt(DATA.meta.status_updated || DATA.meta.updated);
+document.getElementById('aboutUpdated').textContent = updatedAt;
+document.getElementById('lastUpdated').textContent = `آخر تغيير في البيانات: ${updatedAt}`;
 populateDepartments();
 updateSelectedCount();
 renderBrowse();

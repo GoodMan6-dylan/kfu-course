@@ -1,0 +1,26 @@
+[Unit]
+Description=Refresh KFU course sections from Banner and publish changed data
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=kfu
+Group=kfu
+WorkingDirectory=/srv/kfu-course
+Environment=KFU_REPO_ROOT=/srv/kfu-course
+Environment=KFU_STATE_DIR=/var/lib/kfu-course-updater
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/usr/bin/bash /srv/kfu-course/ops/run-update.sh
+StateDirectory=kfu-course-updater
+StateDirectoryMode=0700
+UMask=0077
+TimeoutStartSec=15min
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/srv/kfu-course
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kfu-course-update
