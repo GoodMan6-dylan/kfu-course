@@ -37,8 +37,14 @@ jobs:
               rc=$?
             fi
             IFS='|' read -r code bytes redirects effective <<< "$result"
-            chain=$(awk '/^HTTP\// { gsub("\r", "", $2); if (out != "") out = out " -> "; out = out $2 } END { print out }' "$headers")
-            tables=$(grep -oi 'class="normaltxt"' "$body" | wc -l | tr -d '[:space:]')
+            chain=''
+            if [[ -f "$headers" ]]; then
+              chain=$(awk '/^HTTP\// { gsub("\r", "", $2); if (out != "") out = out " -> "; out = out $2 } END { print out }' "$headers")
+            fi
+            tables=0
+            if [[ -f "$body" ]]; then
+              tables=$(grep -oi 'class="normaltxt"' "$body" | wc -l | tr -d '[:space:]' || true)
+            fi
 
             printf '%s: curl=%s http=%s final=%s bytes=%s redirects=%s tables=%s url=%s\n' \
               "$page" "$rc" "$chain" "$code" "$bytes" "$redirects" "$tables" "$effective"
