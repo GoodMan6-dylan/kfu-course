@@ -428,6 +428,14 @@ main {
 .course-header:hover { background: var(--kfu-green-light); }
 .course-group.collapsed .course-header { border-bottom-color: transparent; }
 
+@media (max-width: 600px) {
+  .course-header { grid-template-columns: minmax(0, 1fr) auto auto; }
+  .course-header > div { grid-column: 1 / -1; grid-row: 2; min-width: 0; }
+  .course-header > .course-code { grid-column: 1; grid-row: 1; justify-self: start; }
+  .course-header > .section-count { grid-column: 2; grid-row: 1; }
+  .course-header > .chevron { grid-column: 3; grid-row: 1; }
+}
+
 .course-code {
   font-family: ui-monospace, 'SF Mono', monospace;
   font-size: 0.85rem;
@@ -873,16 +881,134 @@ footer a:hover { text-decoration: underline; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* First-visit introduction: the page and its data keep loading behind the veil. */
+.site-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: rgba(250, 250, 247, 0.82);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  text-align: center;
+  transition: opacity 0.55s ease, visibility 0.55s ease;
+}
+.site-intro[hidden] { display: none; }
+.site-intro.is-closing { opacity: 0; visibility: hidden; pointer-events: none; }
+.intro-panel {
+  width: min(100%, 440px);
+  padding: 2rem 1.5rem;
+  border: 1px solid rgba(197, 165, 114, 0.38);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 18px 56px rgba(0, 77, 36, 0.14);
+}
+.intro-logo {
+  display: block;
+  width: min(38vw, 156px);
+  height: auto;
+  margin: 0 auto 1.25rem;
+  animation: intro-pulse 2.4s ease-in-out infinite;
+}
+@keyframes intro-pulse {
+  50% { transform: scale(1.055); filter: drop-shadow(0 0 18px rgba(197, 165, 114, 0.4)); }
+}
+.intro-heading { color: var(--kfu-green-dark); font-size: clamp(1.3rem, 5vw, 1.7rem); line-height: 1.35; }
+.intro-credit { margin-top: 0.7rem; color: var(--text-muted); font-size: 0.95rem; }
+.intro-skip {
+  margin-top: 1.6rem;
+  min-width: 108px;
+  min-height: 44px;
+  padding: 0.55rem 1.3rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--kfu-green);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.intro-skip:hover { background: var(--kfu-green-dark); }
+.intro-skip:focus-visible { outline: 3px solid var(--kfu-gold); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  .site-intro, .intro-logo { animation: none !important; transition: none !important; }
+}
+
 /* print */
 @media print {
-  .site-header, .tabs-nav, .filters, .selected-list, footer, .schedule-actions { display: none !important; }
+  .site-header, .tabs-nav, .filters, footer, .schedule-actions, .site-intro, .btn-remove { display: none !important; }
   body { background: white; }
-  .schedule-layout { grid-template-columns: 1fr; }
+  .schedule-layout { grid-template-columns: 1fr; zoom: 0.82; }
+  .selected-list { position: static; max-height: none; overflow: visible; padding: 0.5rem; }
+  #selectedItems { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+  .selected-item { margin: 0; break-inside: avoid; }
   .timetable { border: none; padding: 0; }
 }
 </style>
 </head>
 <body>
+
+<div class="site-intro" id="siteIntro" role="dialog" aria-modal="true" aria-labelledby="introHeading" hidden>
+  <div class="intro-panel">
+    <img class="intro-logo" src="site-mark.svg" width="156" height="156" alt="">
+    <h2 class="intro-heading" id="introHeading">الشعب الدراسية</h2>
+    <p class="intro-credit" id="introCredit">صُنع بواسطة محمد القريني ومحمد الشواف</p>
+    <button class="intro-skip" id="introSkip" type="button">تخطي</button>
+  </div>
+</div>
+<script>
+  // Run before data.js so the five-second timer never delays data or Analytics.
+  (() => {
+    const intro = document.getElementById('siteIntro');
+    const skip = document.getElementById('introSkip');
+    const text = {
+      ar: { heading: 'الشعب الدراسية', credit: 'صُنع بواسطة محمد القريني ومحمد الشواف', skip: 'تخطي' },
+      en: { heading: 'Course Sections', credit: 'Made by Mohammed Alquraini & Mohammed Alshawaf', skip: 'Skip' },
+    };
+    function setIntroLanguage(language) {
+      const lang = language === 'en' ? 'en' : 'ar';
+      intro.lang = lang;
+      intro.dir = lang === 'en' ? 'ltr' : 'rtl';
+      document.getElementById('introHeading').textContent = text[lang].heading;
+      document.getElementById('introCredit').textContent = text[lang].credit;
+      skip.textContent = text[lang].skip;
+    }
+    setIntroLanguage(window.KFU_INITIAL_LANGUAGE);
+
+    let alreadySeen = false;
+    try { alreadySeen = sessionStorage.getItem('kfu_intro_seen') === '1'; } catch (_) { /* Storage may be disabled. */ }
+    if (alreadySeen) return;
+    try { sessionStorage.setItem('kfu_intro_seen', '1'); } catch (_) { /* Show once for this page if storage is disabled. */ }
+
+    const onLanguageChange = event => setIntroLanguage(event.detail?.language);
+    document.addEventListener('kfu:languagechange', onLanguageChange);
+
+    intro.hidden = false;
+    skip.focus({ preventScroll: true });
+    let closed = false;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    function closeIntro() {
+      if (closed) return;
+      closed = true;
+      clearTimeout(timer);
+      document.removeEventListener('kfu:languagechange', onLanguageChange);
+      if (reduceMotion.matches) {
+        intro.remove();
+      } else {
+        intro.classList.add('is-closing');
+        setTimeout(() => intro.remove(), 600);
+      }
+    }
+    const timer = setTimeout(closeIntro, 5000);
+    skip.addEventListener('click', closeIntro);
+    intro.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeIntro();
+      if (event.key === 'Tab') { event.preventDefault(); skip.focus(); }
+    });
+  })();
+</script>
 
 <header class="site-header">
   <div class="header-inner">
@@ -1148,7 +1274,7 @@ function collegeName(code) { return currentLanguage === 'en' ? (COLLEGE_EN[code]
 function departmentName(code) { return currentLanguage === 'en' ? (DEPARTMENT_EN[code] || DATA.departments[code]?.name || code) : (DATA.departments[code]?.name || code); }
 function courseName(course) {
   if (currentLanguage === 'ar') return course.name;
-  return course.name_en || `${course.name} · ${course.course}`;
+  return course.name_en || `${course.name} · \u2066${course.course}\u2069`;
 }
 function sectionType(type) { return t('types')[type] || type || ''; }
 const HTML_ENTITIES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
