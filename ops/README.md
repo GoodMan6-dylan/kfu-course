@@ -28,3 +28,11 @@ sudo journalctl -t kfu-course-update -p crit --no-pager
 ```
 
 The wrapper uses `flock` to prevent overlapping runs. It fetches `main`, fast-forwards when the server is behind, or rebases its local unpushed commits if both sides advanced. A rebase conflict is aborted, logged, and stops the run; the wrapper never force-pushes. It then calls `python3 scripts/update_banner.py --repo-root /srv/kfu-course`. The updater's exit codes are `0` for a full fetch, `2` for a partial fetch, and `3` for a safety abort. The wrapper commits `data.js` only if changed, and retries any commit left unpushed by a prior failed push. A partial Banner failure may still publish changes from valid pages while keeping rows from failed pages; a safety abort publishes nothing. Every failed run increments a persistent count. From the second consecutive failure onward, the journal records an `ALERT` at critical priority, including the stage and count. The count resets after a fully successful fetch and push.
+
+Each safe completed check also publishes `check-status.json`, even when course data is unchanged. Its timestamp and result are separate from `data.js`'s `meta.status_updated`, which records the last actual data change. Both files carry `term_code`.
+
+## Changing semesters
+
+Change `TERM_CODE` at the top of `scripts/update_banner.py`. The current term is `144820` (second semester 1448); sources remain Engineering, Science, and Language Center for men and women. Verify all six new URLs from the Saudi server before publishing. The parser validates the semester in the page heading. A term transition requires every page to pass, retains the 30% drop checks, and aborts without writing if any page fails, so old and new semester sections cannot be mixed.
+
+The interface derives term labels and saved timetable keys from `meta.term_code`. Old timetables remain stored under their old term key; CRNs are never carried into a different semester. For a coordinated release, generate and review the new data on the Saudi server and publish it with the updated script and interface.

@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>الشعب الدراسية — جامعة الملك فيصل · 1448 | طلاب وطالبات</title>
-<meta name="description" content="منشئ الجدول الدراسي والشعب لجامعة الملك فيصل — الفصل الأول 1448">
+<title>الشعب الدراسية — جامعة الملك فيصل · الفصل الثاني 1448 | طلاب وطالبات</title>
+<meta name="description" content="منشئ الجدول الدراسي والشعب لجامعة الملك فيصل — الفصل الثاني 1448">
 <meta name="theme-color" content="#006c35">
 <link rel="canonical" href="https://goodman6-dylan.github.io/kfu-course/">
 <meta property="og:title" content="الشعب الدراسية — جامعة الملك فيصل | KFU Course Sections">
@@ -1037,7 +1037,7 @@ footer a:hover { text-decoration: underline; }
       <button class="language-toggle" id="languageToggle" type="button" aria-label="Switch to English" lang="en">English</button>
     </div>
     <div class="header-meta">
-      <span class="term-badge" id="termBadge" data-i18n="termBadge">الفصل الأول 1448 هـ · طلاب وطالبات</span>
+      <span class="term-badge" id="termBadge" data-i18n="termBadge">الفصل الثاني 1448 هـ · طلاب وطالبات</span>
       <span class="check-badge" id="headerCheckStatus" data-state="unavailable" role="status" aria-live="polite">آخر فحص: جارٍ التحقق…</span>
     </div>
   </div>
@@ -1187,12 +1187,22 @@ footer a:hover { text-decoration: underline; }
 
 <div class="toast" id="toast"></div>
 
-<script src="data.js"></script>
+<script src="data.js?v=20261107"></script>
 <script>
 // ============================================================
 // APP STATE & DATA
 // ============================================================
 const DATA = KFU_DATA;
+const LEGACY_TERM_LABEL = String(DATA.meta.term || 'الفصل الأول 1448');
+const TERM_CODE = /^\d{6}$/.test(String(DATA.meta.term_code || ''))
+  ? String(DATA.meta.term_code)
+  : `${(LEGACY_TERM_LABEL.match(/\d{4}/) || ['1448'])[0]}${LEGACY_TERM_LABEL.includes('الثاني') ? '20' : LEGACY_TERM_LABEL.includes('الصيفي') ? '30' : '10'}`;
+const TERM_YEAR = TERM_CODE.slice(0, 4);
+const TERM_SEMESTER = TERM_CODE.slice(-2);
+const TERM_LABELS = {
+  ar: `${({ '10': 'الفصل الأول', '20': 'الفصل الثاني', '30': 'الفصل الصيفي' })[TERM_SEMESTER] || `الفصل ${TERM_SEMESTER}`} ${TERM_YEAR}`,
+  en: `${({ '10': 'First semester', '20': 'Second semester', '30': 'Summer semester' })[TERM_SEMESTER] || `Term ${TERM_SEMESTER}`} ${TERM_YEAR} AH`,
+};
 const DAY_NAMES = {
   ar: { sun: 'الأحد', mon: 'الإثنين', tue: 'الثلاثاء', wed: 'الأربعاء', thu: 'الخميس' },
   en: { sun: 'Sunday', mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday' },
@@ -1202,7 +1212,8 @@ const DAY_LETTERS = {
   en: { sun: 'Sun', mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu' },
 };
 const DAYS_ORDER = ['sun', 'mon', 'tue', 'wed', 'thu'];
-const STORAGE_KEY = 'kfu_schedule_1448_t1';
+// Keep the original term's saved timetable intact; CRNs must never cross terms.
+const STORAGE_KEY = TERM_CODE === '144810' ? 'kfu_schedule_1448_t1' : `kfu_schedule_${TERM_CODE}`;
 const LANGUAGE_KEY = 'kfu_site_language';
 let currentLanguage = window.KFU_INITIAL_LANGUAGE || 'ar';
 let checkStatus = null;
@@ -1210,11 +1221,11 @@ let checkStatusLoaded = false;
 let checkStatusRequestActive = false;
 const I18N = {
   ar: {
-    title: 'الشعب الدراسية — جامعة الملك فيصل · 1448 | طلاب وطالبات',
-    description: 'منشئ الجدول الدراسي والشعب لجامعة الملك فيصل — الفصل الأول 1448',
+    title: `الشعب الدراسية — جامعة الملك فيصل · ${TERM_LABELS.ar} | طلاب وطالبات`,
+    description: `منشئ الجدول الدراسي والشعب لجامعة الملك فيصل — ${TERM_LABELS.ar}`,
     brandMark: 'ك‌ف', siteHeading: 'الشعب الدراسية — جامعة الملك فيصل',
     siteSubtitle: 'عرض الشعب وإنشاء الجدول الدراسي · فرع الأحساء · طلاب وطالبات',
-    termBadge: 'الفصل الأول 1448 هـ · طلاب وطالبات',
+    termBadge: `${TERM_LABELS.ar} هـ · طلاب وطالبات`,
     browseTab: 'تصفح الشعب', scheduleTab: 'جدولي الدراسي', aboutTab: 'عن الموقع',
     searchLabel: 'بحث (اسم المادة، رقم المقرر، CRN، أو اسم المدرس)',
     searchPlaceholder: 'مثلاً: ستاتيكا أو 2200-201 أو 27498',
@@ -1241,11 +1252,11 @@ const I18N = {
     types: { 'نظري': 'نظري', 'عملي': 'عملي', 'اختياري': 'اختياري', 'بحث': 'بحث', 'تدريب': 'تدريب' },
   },
   en: {
-    title: 'Course Sections — King Faisal University · 1448 | Men and Women',
-    description: 'Browse King Faisal University course sections and build your timetable — first semester 1448 AH',
+    title: `Course Sections — King Faisal University · ${TERM_LABELS.en} | Men and Women`,
+    description: `Browse King Faisal University course sections and build your timetable — ${TERM_LABELS.en}`,
     brandMark: 'KFU', siteHeading: 'Course Sections — King Faisal University',
     siteSubtitle: 'Browse sections and build your timetable · Al Ahsa campus · Men and Women',
-    termBadge: 'First semester 1448 AH · Men and Women',
+    termBadge: `${TERM_LABELS.en} · Men and Women`,
     browseTab: 'Browse sections', scheduleTab: 'My timetable', aboutTab: 'About',
     searchLabel: 'Search (course name, course code, CRN, or instructor)',
     searchPlaceholder: 'e.g. 2200-201 or 27498',
@@ -1278,7 +1289,7 @@ const COLLEGE_EN = {
   '08': 'Science (Men)', '08F': 'Science (Women)',
   '17': 'Language Center (Men)', '17F': 'Language Center (Women)',
 };
-// Match the 46 current Banner department codes; unknown future codes retain their Banner label.
+// Translate known Banner department codes; unknown future codes retain their Banner label.
 const DEPARTMENT_EN = {
   '0814': 'Physics (Service)', '0815': 'Chemistry (Service)', '0816': 'Biology (Service)', '0817': 'Mathematics (Service)',
   '0824': 'Physics (Major)', '0825': 'Chemistry (Major)', '0826': 'Biology (Major)', '0827': 'Mathematics (Major)',
@@ -1287,11 +1298,16 @@ const DEPARTMENT_EN = {
   '08F24': 'Physics (Major)', '08F25': 'Chemistry (Major)', '08F26': 'Biology (Major)', '08F27': 'Mathematics (Major)',
   '08F37': 'Mathematics and Statistics', '08F44': 'Physics', '08F45': 'Chemistry', '08F46': 'Life Sciences', '08F47': 'Mathematics and Statistics',
   '1700': 'Foreign Languages Center', '1701': 'Foreign Languages Center', '1722': 'Foreign Languages Center', '1723': 'Foreign Languages Center',
+  '1731': 'Foreign Languages Center',
   '17F00': 'Foreign Languages Center', '17F01': 'Foreign Languages Center', '17F22': 'Foreign Languages Center', '17F23': 'Foreign Languages Center',
   '2200': 'General Engineering', '2201': 'Mechanical Engineering', '2202': 'Electrical Engineering',
   '2203': 'Civil and Environmental Engineering', '2204': 'Chemical Engineering', '2220': 'General Engineering',
+  '2221': 'Mechanical Engineering', '2222': 'Electrical Engineering',
+  '2223': 'Civil Engineering', '2225': 'Chemical Engineering',
   '22F00': 'General Engineering', '22F02': 'Electrical Engineering', '22F03': 'Civil and Environmental Engineering',
   '22F04': 'Chemical Engineering', '22F06': 'Biomedical Engineering', '22F20': 'General Engineering',
+  '22F22': 'Electrical Engineering', '22F23': 'Civil Engineering',
+  '22F25': 'Chemical Engineering', '22F26': 'Biomedical Engineering',
 };
 
 function t(key) { return I18N[currentLanguage][key]; }
@@ -1413,6 +1429,7 @@ async function loadCheckStatus() {
     if (!response.ok) throw new Error(`check status HTTP ${response.status}`);
     const next = await response.json();
     if (!next || !Number.isFinite(Date.parse(next.checked_at)) ||
+        (next.term_code != null && String(next.term_code) !== TERM_CODE) ||
         !['success', 'partial'].includes(next.result) ||
         !Number.isInteger(next.valid_pages) || next.total_pages !== 6) {
       throw new Error('invalid check status');

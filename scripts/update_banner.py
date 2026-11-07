@@ -14,6 +14,7 @@ import argparse
 import copy
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from html import unescape
 from html.parser import HTMLParser
 from http.client import IncompleteRead
 import json
@@ -30,7 +31,7 @@ from urllib.request import Request, urlopen
 
 
 # Change this one value when the next term begins.
-TERM_CODE = "144810"
+TERM_CODE = "144820"
 
 BANNER_HOST = "ssb-ar.kfu.edu.sa"
 BANNER_PATH = "/PROD_ar/ws"
@@ -270,7 +271,9 @@ def parse_meeting(days_value: str, type_value: str, time_value: str) -> dict | N
 def parse_banner(page: Page, html: str, existing_departments: dict) -> tuple[list[dict], dict]:
     # A generic 200 response, a homepage, or a wrong-term page must never
     # turn into a large deletion of valid sections.
-    if "الجدول الدراسي" not in html or page.gender_word not in html or TERM_CODE[:4] not in html:
+    heading_text = clean(unescape(re.sub(r"<[^>]+>", " ", html)))
+    heading_pattern = r"الجدول الدراسي\s*:\s*" + re.escape(term_label()) + r"\s*\(\s*" + re.escape(page.gender_word)
+    if not re.search(heading_pattern, heading_text):
         raise PageError("Banner term/gender schedule heading is missing")
     parser = BannerTables()
     parser.feed(html)
@@ -488,6 +491,8 @@ def update(repo_root: Path, dry_run: bool = False) -> int:
     path = repo_root / "data.js"
     current = read_data(path)
     old_sections = current["sections"]
+    previous_term = current["meta"].get("term_code")
+    term_changed = (previous_term != TERM_CODE) if previous_term else (current["meta"].get("term") != term_label())
     old_by_crn = {str(section["crn"]): section for section in old_sections}
     valid_pages: dict[str, list[dict]] = {}
     failed_pages: dict[str, str] = {}
@@ -516,6 +521,9 @@ def update(repo_root: Path, dry_run: bool = False) -> int:
             # safe as an ordinary fetch failure for the affected page.
             failed_pages[page.name] = f"{type(error).__name__}: {error}"
             logging.exception("%s: unexpected page error; retaining its previous sections", page.name)
+    if term_changed and failed_pages:
+        logging.error("term transition to %s requires all six pages; no files written and no old-term sections retained", TERM_CODE)
+        return 3
     if not valid_pages:
         logging.error("all six Banner pages failed; data.js left untouched")
         return 2
@@ -552,6 +560,7 @@ def update(repo_root: Path, dry_run: bool = False) -> int:
     }
     next_data["sections"] = next_sections
     next_data["meta"].update(
+        term_code=TERM_CODE,
         term=term_label(),
         campus="الأحساء",
         gender="طلاب وطالبات",
@@ -587,6 +596,7 @@ def update(repo_root: Path, dry_run: bool = False) -> int:
             write_data(path, next_data)
             logging.info("wrote %s", path)
     check_status = {
+        "term_code": TERM_CODE,
         "checked_at": checked_at.isoformat(timespec="seconds"),
         "result": "partial" if failed_pages else "success",
         "valid_pages": len(valid_pages),
