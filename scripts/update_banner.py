@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rebuild KFU sections from the six public Banner pages.
+"""Rebuild KFU sections from the configured public Banner pages.
 
 The server timer calls this script after updating its Git checkout. The script
 writes data.js only when the data changes, and writes check-status.json after
@@ -50,6 +50,8 @@ class Page:
     sex_param: str
     college_code: str
     expected_college_header: str
+    # Supplemental pages provide only these engineering service courses.
+    include_courses: tuple[str, ...] = ()
 
     @property
     def url(self) -> str:
@@ -74,6 +76,8 @@ PAGES = (
     Page("eng_f", "22", "12", "22F", "الهندسة"),
     Page("sci_f", "08", "12", "08F", "العلوم"),
     Page("eng-lang_f", "00", "12", "17F", "No College Designated"),
+    Page("eng-programming_m", "09", "11", "22", "علوم الحاسب وتقنية المعلومات", ("0901-204",)),
+    Page("eng-programming_f", "09", "12", "22F", "علوم الحاسب وتقنية المعلومات", ("0901-204",)),
 )
 
 COLLEGES = {
@@ -88,6 +92,7 @@ COLLEGES = {
 # Confirmed against the six saved Banner pages. The prefix identifies a
 # department when one Banner heading contains multiple course prefixes.
 KNOWN_HEADERS = {
+    "09": {"علوم الحاسب": {"0901"}},
     "22": {
         "هندسة - عامة": {"2200"},
         "الهندسة الميكانيكية": {"2201"},
@@ -323,6 +328,12 @@ def parse_banner(page: Page, html: str, existing_departments: dict) -> tuple[lis
         status = STATUS_MAP.get(raw_status)
         if status is None:
             raise PageError(f"unknown status {raw_status!r} for CRN {crn}")
+        data_rows += 1
+        group_rows += 1
+        if page.include_courses and course not in page.include_courses:
+            continue
+        if page.include_courses and page.college_code.removesuffix("F") not in cells[11].split():
+            raise PageError(f"service course {course} is not designated for engineering in Banner")
         prefix = match[1]
         dept = department_code(page, current_department, prefix)
         if dept in headings_by_dept and headings_by_dept[dept] != current_department:
@@ -332,14 +343,15 @@ def parse_banner(page: Page, html: str, existing_departments: dict) -> tuple[lis
         if existing_definition and existing_definition.get("college") != page.college_code:
             raise PageError(f"department {dept} has conflicting college definition")
         if dept not in department_additions:
+            department_name = current_department
+            if page.include_courses:
+                department_name += " — مقرر مساند للهندسة"
             department_additions[dept] = existing_definition or {
                 "college": page.college_code,
-                "name": f"{current_department} ({prefix})",
+                "name": f"{department_name} ({prefix})",
             }
         meeting = parse_meeting(days, activity, clock)
         activity = clean(activity).replace("ا ختياري", "اختياري")
-        data_rows += 1
-        group_rows += 1
         if crn not in grouped:
             grouped[crn] = {
                 "course": course,
@@ -357,6 +369,10 @@ def parse_banner(page: Page, html: str, existing_departments: dict) -> tuple[lis
                 "_instructors": set(),
                 "_meeting_keys": set(),
             }
+            if page.include_courses:
+                # Keep fetch ownership separate from the engineering UI filter.
+                grouped[crn]["source_page"] = page.name
+                grouped[crn]["source_college"] = page.college_param + ("F" if page.sex_param == "12" else "")
         section_obj = grouped[crn]
         for key, value in (
             ("course", course), ("section", section), ("status", status),
@@ -374,7 +390,7 @@ def parse_banner(page: Page, html: str, existing_departments: dict) -> tuple[lis
                 section_obj["meetings"].append(meeting)
     if current_department is not None and group_rows == 0:
         raise PageError(f"department {current_department!r} has no section rows")
-    if data_rows == 0 or column_headers == 0 or not grouped:
+    if data_rows == 0 or column_headers == 0 or (not grouped and not page.include_courses):
         raise PageError("no valid section tables in Banner response")
     result = []
     for section_obj in grouped.values():
@@ -395,12 +411,19 @@ def section_sort_key(section: dict) -> tuple:
     )
 
 
-def retain_previous_page(old_sections: list[dict], college_code: str) -> list[dict]:
+def belongs_to_page(section: dict, page: Page) -> bool:
+    """Supplemental sources share a UI college but own distinct sections."""
+    if section.get("source_page"):
+        return section["source_page"] == page.name
+    return not page.include_courses and section.get("college") == page.college_code
+
+
+def retain_previous_page(old_sections: list[dict], page: Page) -> list[dict]:
     """Keep every old CRN on a failed page, merging legacy duplicate entries."""
     retained: dict[str, dict] = {}
     meeting_keys: dict[str, set[str]] = {}
     for previous in old_sections:
-        if previous.get("college") != college_code:
+        if not belongs_to_page(previous, page):
             continue
         crn = str(previous["crn"])
         if crn not in retained:
@@ -503,10 +526,11 @@ def update(repo_root: Path, dry_run: bool = False) -> int:
         try:
             html = fetch_page(page)
             sections, new_departments = parse_banner(page, html, current["departments"])
-            previous_count = len({section["crn"] for section in old_sections if section.get("college") == page.college_code})
-            # A mostly empty but syntactically valid response is treated as a
-            # failed page, so a truncated page cannot erase one small college.
-            if previous_count and len(sections) * 100 < previous_count * (100 - MAX_DROP_PERCENT):
+            previous_count = len({section["crn"] for section in old_sections if belongs_to_page(section, page)})
+            # Protect full-college sources against suspicious partial data.
+            # A supplemental course may legitimately disappear from a valid
+            # source page; its filtered count is not the source's page size.
+            if not page.include_courses and previous_count and len(sections) * 100 < previous_count * (100 - MAX_DROP_PERCENT):
                 raise PageError(
                     f"page CRNs dropped from {previous_count} to {len(sections)} "
                     f"(more than {MAX_DROP_PERCENT}%)"
@@ -522,10 +546,10 @@ def update(repo_root: Path, dry_run: bool = False) -> int:
             failed_pages[page.name] = f"{type(error).__name__}: {error}"
             logging.exception("%s: unexpected page error; retaining its previous sections", page.name)
     if term_changed and failed_pages:
-        logging.error("term transition to %s requires all six pages; no files written and no old-term sections retained", TERM_CODE)
+        logging.error("term transition to %s requires all %d pages; no files written and no old-term sections retained", TERM_CODE, len(PAGES))
         return 3
     if not valid_pages:
-        logging.error("all six Banner pages failed; data.js left untouched")
+        logging.error("all Banner pages failed; data.js left untouched")
         return 2
 
     next_sections: list[dict] = []
@@ -533,9 +557,9 @@ def update(repo_root: Path, dry_run: bool = False) -> int:
         if page.name in valid_pages:
             next_sections.extend(valid_pages[page.name])
         else:
-            next_sections.extend(retain_previous_page(old_sections, page.college_code))
+            next_sections.extend(retain_previous_page(old_sections, page))
     next_sections.sort(key=section_sort_key)
-    # CRNs should be unique across all six sources. A collision may mean
+    # CRNs should be unique across sources. A collision may mean
     # Banner changed its assignments or a page was mismatched; abort safely.
     if len({section["crn"] for section in next_sections}) != len(next_sections):
         logging.error("duplicate CRNs across pages or retained data; no write")

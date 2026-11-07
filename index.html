@@ -1163,6 +1163,7 @@ footer a:hover { text-decoration: underline; }
         <li><strong>العلوم</strong> — طالبات (فيزياء، كيمياء، أحياء، رياضيات — خدمي وتخصص)</li>
         <li><strong>مركز اللغات</strong> — طالبات (اللغة الإنجليزية)</li>
       </ul>
+      <p style="font-size:0.88rem; color:var(--text-muted);">تشمل الهندسة شعب مقرر البرمجة الهندسية (<bdi>0901-204</bdi>) المخصصة لطلابها وطالباتها، من صفحات كلية الحاسب في بانر باعتباره مقرراً مسانداً للهندسة.</p>
       <p style="font-size:0.88rem; color:var(--text-muted);">الجنس: طلاب وطالبات — الأحساء.</p>
 
       <h3 style="font-size:1.05rem; margin:1rem 0 0.5rem; font-weight:700;">رموز الأيام</h3>
@@ -1187,7 +1188,7 @@ footer a:hover { text-decoration: underline; }
 
 <div class="toast" id="toast"></div>
 
-<script src="data.js?v=20261107"></script>
+<script src="data.js?v=20261107-programming"></script>
 <script>
 // ============================================================
 // APP STATE & DATA
@@ -1291,6 +1292,7 @@ const COLLEGE_EN = {
 };
 // Translate known Banner department codes; unknown future codes retain their Banner label.
 const DEPARTMENT_EN = {
+  '0901': 'Computer Science — Engineering service course', '09F01': 'Computer Science — Engineering service course',
   '0814': 'Physics (Service)', '0815': 'Chemistry (Service)', '0816': 'Biology (Service)', '0817': 'Mathematics (Service)',
   '0824': 'Physics (Major)', '0825': 'Chemistry (Major)', '0826': 'Biology (Major)', '0827': 'Mathematics (Major)',
   '0837': 'Mathematics and Statistics', '0844': 'Physics', '0845': 'Chemistry', '0846': 'Life Sciences', '0847': 'Mathematics and Statistics',
@@ -1309,6 +1311,8 @@ const DEPARTMENT_EN = {
   '22F22': 'Electrical Engineering', '22F23': 'Civil Engineering',
   '22F25': 'Chemical Engineering', '22F26': 'Biomedical Engineering',
 };
+// Search aliases do not replace the course names supplied by Banner.
+const COURSE_SEARCH_ALIASES = { '0901-204': 'Engineering Programming' };
 
 function t(key) { return I18N[currentLanguage][key]; }
 function dayName(day) { return DAY_NAMES[currentLanguage][day] || day; }
@@ -1345,6 +1349,7 @@ const ABOUT_EN_HTML = `
     <li><strong>Science</strong> — Women (Physics, Chemistry, Biology, Mathematics; service and major courses)</li>
     <li><strong>Language Center</strong> — Women (English)</li>
   </ul>
+  <p style="font-size:0.88rem; color:var(--text-muted);">Engineering includes the Engineering Programming (<bdi>0901-204</bdi>) sections assigned to its men and women students, sourced from Banner's Computer Science pages as a service course for Engineering.</p>
   <p style="font-size:0.88rem; color:var(--text-muted);">Men and women · Al Ahsa campus.</p>
   <h3 style="font-size:1.05rem; margin:1rem 0 0.5rem; font-weight:700;">Day codes</h3>
   <p style="font-variant-numeric:tabular-nums;">Sun: Sunday · Mon: Monday · Tue: Tuesday · Wed: Wednesday · Thu: Thursday</p>
@@ -1431,7 +1436,10 @@ async function loadCheckStatus() {
     if (!next || !Number.isFinite(Date.parse(next.checked_at)) ||
         (next.term_code != null && String(next.term_code) !== TERM_CODE) ||
         !['success', 'partial'].includes(next.result) ||
-        !Number.isInteger(next.valid_pages) || next.total_pages !== 6) {
+        !Number.isInteger(next.total_pages) || next.total_pages < 1 ||
+        !Number.isInteger(next.valid_pages) || next.valid_pages < 0 || next.valid_pages > next.total_pages ||
+        (next.result === 'success' && next.valid_pages !== next.total_pages) ||
+        (next.result === 'partial' && next.valid_pages === next.total_pages)) {
       throw new Error('invalid check status');
     }
     if (!checkStatusLoaded || JSON.stringify(next) !== JSON.stringify(checkStatus)) {
@@ -1579,7 +1587,7 @@ function filterSections() {
     if (filters.onlyAvailable && sectionStatus(s.status) !== 'available') return false;
     if (filters.day && !s.meetings.some(m => m.days.includes(filters.day))) return false;
     if (q) {
-      const hay = (s.course + ' ' + s.crn + ' ' + s.name + ' ' + (s.name_en || '') + ' ' + s.instructor + ' ' + departmentName(s.dept) + ' ' + collegeName(s.college)).toLowerCase();
+      const hay = (s.course + ' ' + s.crn + ' ' + s.name + ' ' + (s.name_en || '') + ' ' + (COURSE_SEARCH_ALIASES[s.course] || '') + ' ' + s.instructor + ' ' + departmentName(s.dept) + ' ' + collegeName(s.college)).toLowerCase();
       if (!hay.includes(q)) return false;
     }
     if (filters.hideConflicts && !selectedCRNs.has(s.crn) && getConflictsFor(s.crn).length > 0) return false;

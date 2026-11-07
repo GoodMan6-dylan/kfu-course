@@ -1,6 +1,6 @@
 # Saudi server updater
 
-Install this only after all six Banner pages pass the server-side `curl` access test. The unattended job runs on the Saudi server, not on the local Mac. It uses a dedicated `kfu` account with a GitHub deploy key restricted to `GoodMan6-dylan/kfu-course` and **Allow write access**. The key for logging in to the server is separate.
+Install this only after all configured Banner pages pass the server-side `curl` access test. The unattended job runs on the Saudi server, not on the local Mac. It uses a dedicated `kfu` account with a GitHub deploy key restricted to `GoodMan6-dylan/kfu-course` and **Allow write access**. The key for logging in to the server is separate.
 
 ## Server setup
 
@@ -33,6 +33,12 @@ Each safe completed check also publishes `check-status.json`, even when course d
 
 ## Changing semesters
 
-Change `TERM_CODE` at the top of `scripts/update_banner.py`. The current term is `144820` (second semester 1448); sources remain Engineering, Science, and Language Center for men and women. Verify all six new URLs from the Saudi server before publishing. The parser validates the semester in the page heading. A term transition requires every page to pass, retains the 30% drop checks, and aborts without writing if any page fails, so old and new semester sections cannot be mixed.
+Change `TERM_CODE` at the top of `scripts/update_banner.py`. The current term is `144820` (second semester 1448); sources remain Engineering, Science, and Language Center for men and women. Verify all eight new URLs from the Saudi server before publishing. The parser validates the semester in the page heading. A term transition requires every page to pass, retains the 30% drop checks, and aborts without writing if any page fails, so old and new semester sections cannot be mixed.
 
 The interface derives term labels and saved timetable keys from `meta.term_code`. Old timetables remain stored under their old term key; CRNs are never carried into a different semester. For a coordinated release, generate and review the new data on the Saudi server and publish it with the updated script and interface.
+
+## Engineering Programming service course
+
+Banner publishes `0901-204` (البرمجة الهندسية) under Computer Science (`p_col_code=09`), with Engineering (`22`) in its designated-colleges column. Two supplemental sources (men/women) import **only this course**, not the rest of Computer Science. The UI places it under Engineering with departments `0901` / `09F01` labelled as a Computer Science service course. `source_page` and `source_college` retain its actual Banner source. Empty instructor names are valid.
+
+Retention and per-page drop checks use fetch-source ownership, so a failed Engineering page cannot duplicate or delete sections imported from Computer Science, and a failed supplemental page keeps only its own previous sections. All eight pages participate in the 20-minute timer and heartbeat. A valid supplemental source with no matching course removes its old matching sections. Its filtered count is not treated as the size of the full source page. Full-college sources retain their per-page 30% drop guard, and the global 30% drop guard still applies to every update. Failed or structurally empty supplemental pages retain their previous sections.
