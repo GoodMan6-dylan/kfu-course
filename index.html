@@ -513,10 +513,18 @@ main {
 .section-row.selected:hover { background: #fff0c8; }
 
 .section-row.unavailable { opacity: 0.75; }
+.col-check { display: flex; align-items: center; gap: 0.4rem; }
+.star-button {
+  display: inline-grid; place-items: center; width: 36px; height: 36px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
+  color: var(--text-muted); font-size: 1.45rem; cursor: pointer; flex-shrink: 0;
+}
+.star-button[aria-pressed="true"] { color: #8a5b00; background: var(--kfu-gold-light); border-color: #d7b65a; }
+.star-button:focus-visible { outline: 2px solid var(--kfu-green); outline-offset: 2px; }
 
 @media (max-width: 900px) {
   .section-row {
-    grid-template-columns: 24px minmax(0, 1fr) auto;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
     grid-template-areas:
       "check section status"
       "check crn status"
@@ -530,6 +538,8 @@ main {
   .section-row .col-crn { grid-area: crn; }
   .section-row .col-status { grid-area: status; }
   .section-row .col-check { grid-area: check; }
+  .col-check { flex-direction: column; }
+  .star-button { width: 44px; height: 44px; }
   .section-row .col-info { grid-area: info; display: flex; gap: 0.6rem; flex-wrap: wrap; }
   .section-row .col-time { grid-area: time; }
   .section-row .col-instr { grid-area: instr; min-width: 0; }
@@ -1219,6 +1229,8 @@ const DAYS_ORDER = ['sun', 'mon', 'tue', 'wed', 'thu'];
 // Keep the original term's saved timetable intact; CRNs must never cross terms.
 const STORAGE_KEY = TERM_CODE === '144810' ? 'kfu_schedule_1448_t1' : `kfu_schedule_${TERM_CODE}`;
 const LANGUAGE_KEY = 'kfu_site_language';
+const STARRED_STORAGE_KEY = `kfu_starred_${TERM_CODE}`;
+const STARRED_FILTER = '__starred__';
 let currentLanguage = window.KFU_INITIAL_LANGUAGE || 'ar';
 let checkStatus = null;
 let checkStatusLoaded = false;
@@ -1235,7 +1247,7 @@ const I18N = {
     searchPlaceholder: 'مثلاً: ستاتيكا أو 2200-201 أو 27498',
     collegeLabel: 'الكلية', allColleges: 'كل الكليات', genderLabel: 'الجنس',
     allGenders: 'الجميع', men: 'طلاب', women: 'طالبات', departmentLabel: 'القسم',
-    allDepartments: 'كل الأقسام', dayLabel: 'اليوم', allDays: 'كل الأيام', reset: '↺ تصفير',
+    allDepartments: 'كل الأقسام', starredOnly: '★ المميزة بنجمة', starSection: 'تمييز الشعبة بنجمة', unstarSection: 'إلغاء نجمة الشعبة', dayLabel: 'اليوم', allDays: 'كل الأيام', reset: '↺ تصفير',
     showing: 'عرض', of: 'من', sections: 'شعبة', onlyAvailable: 'الشعب المتاحة فقط',
     hideConflicts: 'إخفاء المتعارض مع جدولي', selectedCourses: 'المواد المختارة',
     print: '🖨 طباعة', copyCrns: '📋 نسخ CRNs', clearAll: 'حذف الكل',
@@ -1266,7 +1278,7 @@ const I18N = {
     searchPlaceholder: 'e.g. 2200-201 or 27498',
     collegeLabel: 'College', allColleges: 'All colleges', genderLabel: 'Students',
     allGenders: 'All students', men: 'Men', women: 'Women', departmentLabel: 'Department',
-    allDepartments: 'All departments', dayLabel: 'Day', allDays: 'All days', reset: '↺ Reset',
+    allDepartments: 'All departments', starredOnly: '★ Starred sections', starSection: 'Star section', unstarSection: 'Unstar section', dayLabel: 'Day', allDays: 'All days', reset: '↺ Reset',
     showing: 'Showing', of: 'of', sections: 'sections', onlyAvailable: 'Available only',
     hideConflicts: 'Hide conflicts with my timetable', selectedCourses: 'Selected courses',
     print: '🖨 Print', copyCrns: '📋 Copy CRNs', clearAll: 'Clear all',
@@ -1504,6 +1516,22 @@ if (selectedCRNs.size !== savedCRNs.length) {
   persistSelection();
 }
 
+let starredCRNs = new Set();
+try {
+  const storedStars = JSON.parse(localStorage.getItem(STARRED_STORAGE_KEY) || '[]');
+  if (Array.isArray(storedStars)) starredCRNs = new Set(storedStars.filter(crn => typeof crn === 'string' && /^\d+$/.test(crn)));
+} catch (_) { /* Stars remain usable when browser storage is unavailable. */ }
+
+function toggleStar(crn) {
+  if (!Object.hasOwn(SECTION_BY_CRN, crn)) return;
+  if (starredCRNs.has(crn)) starredCRNs.delete(crn);
+  else starredCRNs.add(crn);
+  try { localStorage.setItem(STARRED_STORAGE_KEY, JSON.stringify([...starredCRNs])); }
+  catch (_) { /* Keep stars in memory when storage is unavailable. */ }
+  renderBrowse();
+  document.querySelector(`[data-action="star"][data-crn="${crn}"]`)?.focus({ preventScroll: true });
+}
+
 // Filters state
 const filters = { q: '', college: '', dept: '', day: '', gender: '', onlyAvailable: false, hideConflicts: false };
 
@@ -1575,7 +1603,7 @@ function getConflictsFor(crn) {
 function populateDepartments() {
   const sel = document.getElementById('deptSelect');
   const college = filters.college;
-  const opts = [{ value: '', label: t('allDepartments') }];
+  const opts = [{ value: '', label: t('allDepartments') }, { value: STARRED_FILTER, label: t('starredOnly') }];
   Object.entries(DATA.departments).forEach(([code, info]) => {
     if (!college || info.college === college) {
       opts.push({ value: code, label: `${departmentName(code)} (${code})` });
@@ -1600,7 +1628,9 @@ function filterSections() {
       if (filters.gender === 'M' && isF) return false;
       if (filters.gender === 'F' && !isF) return false;
     }
-    if (filters.dept && s.dept !== filters.dept) return false;
+    if (filters.dept === STARRED_FILTER) {
+      if (!starredCRNs.has(s.crn)) return false;
+    } else if (filters.dept && s.dept !== filters.dept) return false;
     if (filters.onlyAvailable && sectionStatus(s.status) !== 'available') return false;
     if (filters.day && !s.meetings.some(m => m.days.includes(filters.day))) return false;
     if (q) {
@@ -1686,7 +1716,8 @@ function renderSectionRow(s) {
   return `
     <div class="section-row ${status === 'unavailable' ? 'unavailable' : ''} ${isSelected ? 'selected' : ''}" data-crn="${escapeHtml(s.crn)}">
       <div class="col-check">
-        <input type="checkbox" data-action="toggle" data-crn="${escapeHtml(s.crn)}" ${isSelected ? 'checked' : ''}>
+        <input type="checkbox" data-action="toggle" data-crn="${escapeHtml(s.crn)}" aria-label="${escapeHtml(t('section') + ' ' + s.section + ' · CRN ' + s.crn)}" ${isSelected ? 'checked' : ''}>
+        <button type="button" class="star-button" data-action="star" data-crn="${escapeHtml(s.crn)}" aria-pressed="${starredCRNs.has(s.crn)}" aria-label="${escapeHtml(t(starredCRNs.has(s.crn) ? 'unstarSection' : 'starSection') + ' ' + s.crn)}" title="${escapeHtml(t(starredCRNs.has(s.crn) ? 'unstarSection' : 'starSection'))}">${starredCRNs.has(s.crn) ? '★' : '☆'}</button>
       </div>
       <div class="col-section"><span class="section-num">${escapeHtml(s.section)}</span></div>
       <div class="col-crn"><span class="crn-num">${escapeHtml(s.crn)}</span></div>
@@ -1878,6 +1909,11 @@ function rerenderAll() {
 }
 
 document.addEventListener('click', (e) => {
+  const starButton = e.target.closest('[data-action="star"]');
+  if (starButton) {
+    toggleStar(starButton.dataset.crn);
+    return;
+  }
   // Course header toggle
   const header = e.target.closest('.course-header');
   if (header) {
