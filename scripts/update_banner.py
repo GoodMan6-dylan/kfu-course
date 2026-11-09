@@ -50,8 +50,6 @@ class Page:
     sex_param: str
     college_code: str
     expected_college_header: str
-    # Supplemental pages provide only these engineering service courses.
-    include_courses: tuple[str, ...] = ()
 
     @property
     def url(self) -> str:
@@ -76,20 +74,22 @@ PAGES = (
     Page("eng_f", "22", "12", "22F", "الهندسة"),
     Page("sci_f", "08", "12", "08F", "العلوم"),
     Page("eng-lang_f", "00", "12", "17F", "No College Designated"),
-    Page("eng-programming_m", "09", "11", "22", "علوم الحاسب وتقنية المعلومات", ("0901-204",)),
-    Page("eng-programming_f", "09", "12", "22F", "علوم الحاسب وتقنية المعلومات", ("0901-204",)),
+    Page("cs_m", "09", "11", "09", "علوم الحاسب وتقنية المعلومات"),
+    Page("cs_f", "09", "12", "09F", "علوم الحاسب وتقنية المعلومات"),
 )
 
 COLLEGES = {
     "22": "الهندسة",
     "08": "العلوم",
+    "09": "علوم الحاسب وتقنية المعلومات",
     "17": "مركز اللغات",
     "22F": "الهندسة (طالبات)",
     "08F": "العلوم (طالبات)",
+    "09F": "علوم الحاسب وتقنية المعلومات (طالبات)",
     "17F": "مركز اللغات (طالبات)",
 }
 
-# Confirmed against the six saved Banner pages. The prefix identifies a
+# Confirmed against saved Banner pages. The prefix identifies a
 # department when one Banner heading contains multiple course prefixes.
 KNOWN_HEADERS = {
     "09": {"علوم الحاسب": {"0901"}},
@@ -330,10 +330,6 @@ def parse_banner(page: Page, html: str, existing_departments: dict) -> tuple[lis
             raise PageError(f"unknown status {raw_status!r} for CRN {crn}")
         data_rows += 1
         group_rows += 1
-        if page.include_courses and course not in page.include_courses:
-            continue
-        if page.include_courses and page.college_code.removesuffix("F") not in cells[11].split():
-            raise PageError(f"service course {course} is not designated for engineering in Banner")
         prefix = match[1]
         dept = department_code(page, current_department, prefix)
         if dept in headings_by_dept and headings_by_dept[dept] != current_department:
@@ -343,12 +339,9 @@ def parse_banner(page: Page, html: str, existing_departments: dict) -> tuple[lis
         if existing_definition and existing_definition.get("college") != page.college_code:
             raise PageError(f"department {dept} has conflicting college definition")
         if dept not in department_additions:
-            department_name = current_department
-            if page.include_courses:
-                department_name += " — مقرر مساند للهندسة"
             department_additions[dept] = existing_definition or {
                 "college": page.college_code,
-                "name": f"{department_name} ({prefix})",
+                "name": f"{current_department} ({prefix})",
             }
         meeting = parse_meeting(days, activity, clock)
         activity = clean(activity).replace("ا ختياري", "اختياري")
@@ -369,10 +362,6 @@ def parse_banner(page: Page, html: str, existing_departments: dict) -> tuple[lis
                 "_instructors": set(),
                 "_meeting_keys": set(),
             }
-            if page.include_courses:
-                # Keep fetch ownership separate from the engineering UI filter.
-                grouped[crn]["source_page"] = page.name
-                grouped[crn]["source_college"] = page.college_param + ("F" if page.sex_param == "12" else "")
         section_obj = grouped[crn]
         for key, value in (
             ("course", course), ("section", section), ("status", status),
@@ -390,7 +379,7 @@ def parse_banner(page: Page, html: str, existing_departments: dict) -> tuple[lis
                 section_obj["meetings"].append(meeting)
     if current_department is not None and group_rows == 0:
         raise PageError(f"department {current_department!r} has no section rows")
-    if data_rows == 0 or column_headers == 0 or (not grouped and not page.include_courses):
+    if data_rows == 0 or column_headers == 0 or not grouped:
         raise PageError("no valid section tables in Banner response")
     result = []
     for section_obj in grouped.values():
@@ -411,11 +400,46 @@ def section_sort_key(section: dict) -> tuple:
     )
 
 
+# Before full Computer Science coverage, only 0901-204 was imported under
+# Engineering. These exact source markers identify the records to move safely.
+LEGACY_PROGRAMMING_SOURCES = {
+    "eng-programming_m": ("22", "09", "0901"),
+    "eng-programming_f": ("22F", "09F", "09F01"),
+}
+
+
+def migrate_legacy_programming_sources(data: dict) -> dict:
+    """Normalize old service-course ownership without changing its Banner data.
+
+    The caller retains the original document as its change-comparison baseline.
+    This normalized copy is used for page counts and failed-page retention, so
+    a failed CS fetch still keeps these CRNs in CS rather than Engineering.
+    """
+    migrated = copy.deepcopy(data)
+    for section in migrated["sections"]:
+        source = section.get("source_page")
+        if source not in LEGACY_PROGRAMMING_SOURCES:
+            continue
+        old_college, new_college, dept = LEGACY_PROGRAMMING_SOURCES[source]
+        if (section.get("course") != "0901-204" or section.get("dept") != dept
+                or section.get("college") not in {old_college, new_college}):
+            raise ValueError(f"unexpected legacy service-course assignment for CRN {section.get('crn')}")
+        definition = migrated["departments"].get(dept)
+        if not definition or definition.get("college") not in {old_college, new_college}:
+            raise ValueError(f"unexpected legacy department definition for {dept}")
+        section["college"] = new_college
+        section.pop("source_page", None)
+        section.pop("source_college", None)
+        definition["college"] = new_college
+        definition["name"] = "علوم الحاسب (0901)"
+    return migrated
+
+
 def belongs_to_page(section: dict, page: Page) -> bool:
-    """Supplemental sources share a UI college but own distinct sections."""
+    """Each full Banner source owns the sections of its college and gender."""
     if section.get("source_page"):
         return section["source_page"] == page.name
-    return not page.include_courses and section.get("college") == page.college_code
+    return section.get("college") == page.college_code
 
 
 def retain_previous_page(old_sections: list[dict], page: Page) -> list[dict]:
@@ -513,7 +537,8 @@ def term_label() -> str:
 def update(repo_root: Path, dry_run: bool = False) -> int:
     path = repo_root / "data.js"
     current = read_data(path)
-    old_sections = current["sections"]
+    previous = migrate_legacy_programming_sources(current)
+    old_sections = previous["sections"]
     previous_term = current["meta"].get("term_code")
     term_changed = (previous_term != TERM_CODE) if previous_term else (current["meta"].get("term") != term_label())
     old_by_crn = {str(section["crn"]): section for section in old_sections}
@@ -525,12 +550,11 @@ def update(repo_root: Path, dry_run: bool = False) -> int:
             time.sleep(PAGE_DELAY_SECONDS)
         try:
             html = fetch_page(page)
-            sections, new_departments = parse_banner(page, html, current["departments"])
+            sections, new_departments = parse_banner(page, html, previous["departments"])
             previous_count = len({section["crn"] for section in old_sections if belongs_to_page(section, page)})
-            # Protect full-college sources against suspicious partial data.
-            # A supplemental course may legitimately disappear from a valid
-            # source page; its filtered count is not the source's page size.
-            if not page.include_courses and previous_count and len(sections) * 100 < previous_count * (100 - MAX_DROP_PERCENT):
+            # Every source now contains a full college. Legacy service-course
+            # records count only toward CS, never toward Engineering.
+            if previous_count and len(sections) * 100 < previous_count * (100 - MAX_DROP_PERCENT):
                 raise PageError(
                     f"page CRNs dropped from {previous_count} to {len(sections)} "
                     f"(more than {MAX_DROP_PERCENT}%)"
@@ -574,7 +598,7 @@ def update(repo_root: Path, dry_run: bool = False) -> int:
     next_data = copy.deepcopy(current)
     next_data["colleges"] = COLLEGES
     used_depts = {section["dept"] for section in next_sections}
-    available_depts = {**current["departments"], **department_additions}
+    available_depts = {**previous["departments"], **department_additions}
     missing_depts = used_depts - available_depts.keys()
     if missing_depts:
         logging.error("missing department definitions %s; no write", sorted(missing_depts))
@@ -588,7 +612,7 @@ def update(repo_root: Path, dry_run: bool = False) -> int:
         term=term_label(),
         campus="الأحساء",
         gender="طلاب وطالبات",
-        note="يشمل طلاب وطالبات - الهندسة والعلوم ومركز اللغات",
+        note="يشمل طلاب وطالبات - الهندسة والعلوم وعلوم الحاسب وتقنية المعلومات ومركز اللغات",
     )
 
     next_by_crn = {str(section["crn"]): section for section in next_sections}

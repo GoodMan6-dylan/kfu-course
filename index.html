@@ -1072,6 +1072,8 @@ footer a:hover { text-decoration: underline; }
             <option value="" data-i18n="allColleges">كل الكليات</option>
             <option value="22" data-college="22">الهندسة (طلاب)</option>
             <option value="22F" data-college="22F">الهندسة (طالبات)</option>
+            <option value="09" data-college="09">الحاسب (طلاب)</option>
+            <option value="09F" data-college="09F">الحاسب (طالبات)</option>
             <option value="08" data-college="08">العلوم (طلاب)</option>
             <option value="08F" data-college="08F">العلوم (طالبات)</option>
             <option value="17" data-college="17">مركز اللغات (طلاب)</option>
@@ -1159,11 +1161,12 @@ footer a:hover { text-decoration: underline; }
         <li><strong>الهندسة</strong> — طلاب (ميكانيكية، كهربائية، مدنية، كيميائية)</li>
         <li><strong>العلوم</strong> — طلاب (فيزياء، كيمياء، أحياء، رياضيات — خدمي وتخصص)</li>
         <li><strong>مركز اللغات</strong> — طلاب (اللغة الإنجليزية)</li>
+        <li><strong>علوم الحاسب وتقنية المعلومات</strong> — طلاب وطالبات (علوم الحاسب، نظم المعلومات، هندسة الحاسب، الشبكات والاتصالات)</li>
         <li><strong>الهندسة</strong> — طالبات (كهربائية، مدنية، كيميائية، طبية حيوية)</li>
         <li><strong>العلوم</strong> — طالبات (فيزياء، كيمياء، أحياء، رياضيات — خدمي وتخصص)</li>
         <li><strong>مركز اللغات</strong> — طالبات (اللغة الإنجليزية)</li>
       </ul>
-      <p style="font-size:0.88rem; color:var(--text-muted);">تشمل الهندسة شعب مقرر البرمجة الهندسية (<bdi>0901-204</bdi>) المخصصة لطلابها وطالباتها، من صفحات كلية الحاسب في بانر باعتباره مقرراً مسانداً للهندسة.</p>
+      <p style="font-size:0.88rem; color:var(--text-muted);">تشمل كلية الحاسب وتقنية المعلومات جميع شعب الطلاب والطالبات، ومنها البرمجة الهندسية (<bdi>0901-204</bdi>) حسب تصنيف بانر.</p>
       <p style="font-size:0.88rem; color:var(--text-muted);">الجنس: طلاب وطالبات — الأحساء.</p>
 
       <h3 style="font-size:1.05rem; margin:1rem 0 0.5rem; font-weight:700;">رموز الأيام</h3>
@@ -1188,7 +1191,7 @@ footer a:hover { text-decoration: underline; }
 
 <div class="toast" id="toast"></div>
 
-<script src="data.js?v=20261107-programming"></script>
+<script src="data.js?v=20261109-cs"></script>
 <script>
 // ============================================================
 // APP STATE & DATA
@@ -1288,11 +1291,23 @@ const I18N = {
 const COLLEGE_EN = {
   '22': 'Engineering (Men)', '22F': 'Engineering (Women)',
   '08': 'Science (Men)', '08F': 'Science (Women)',
+  '09': 'Computer Science and IT (Men)', '09F': 'Computer Science and IT (Women)',
   '17': 'Language Center (Men)', '17F': 'Language Center (Women)',
 };
 // Translate known Banner department codes; unknown future codes retain their Banner label.
 const DEPARTMENT_EN = {
-  '0901': 'Computer Science — Engineering service course', '09F01': 'Computer Science — Engineering service course',
+  '0901': 'Computer Science', '09F01': 'Computer Science',
+  '0911': 'Computer Science', '09F11': 'Computer Science',
+  '0912': 'Information Systems', '09F12': 'Information Systems',
+  '0914': 'Networks and Communications', '09F14': 'Networks and Communications',
+  '0921': 'Computer Science', '09F21': 'Computer Science',
+  '0922': 'Computer Information Systems', '09F22': 'Computer Information Systems',
+  '0923': 'Computer Engineering', '09F23': 'Computer Engineering',
+  '0924': 'Computer Networks and Communications', '09F24': 'Computer Networks and Communications',
+  '0931': 'Computer Science', '09F31': 'Computer Science',
+  '0932': 'Computer Information Systems', '09F32': 'Computer Information Systems',
+  '0933': 'Computer Engineering', '09F33': 'Computer Engineering',
+  '0934': 'Networks and Communications', '09F34': 'Networks and Communications',
   '0814': 'Physics (Service)', '0815': 'Chemistry (Service)', '0816': 'Biology (Service)', '0817': 'Mathematics (Service)',
   '0824': 'Physics (Major)', '0825': 'Chemistry (Major)', '0826': 'Biology (Major)', '0827': 'Mathematics (Major)',
   '0837': 'Mathematics and Statistics', '0844': 'Physics', '0845': 'Chemistry', '0846': 'Life Sciences', '0847': 'Mathematics and Statistics',
@@ -1345,11 +1360,12 @@ const ABOUT_EN_HTML = `
     <li><strong>Engineering</strong> — Men (Mechanical, Electrical, Civil, Chemical)</li>
     <li><strong>Science</strong> — Men (Physics, Chemistry, Biology, Mathematics; service and major courses)</li>
     <li><strong>Language Center</strong> — Men (English)</li>
+    <li><strong>Computer Science and Information Technology</strong> — Men and Women (Computer Science, Information Systems, Computer Engineering, Networks and Communications)</li>
     <li><strong>Engineering</strong> — Women (Electrical, Civil, Chemical, Biomedical)</li>
     <li><strong>Science</strong> — Women (Physics, Chemistry, Biology, Mathematics; service and major courses)</li>
     <li><strong>Language Center</strong> — Women (English)</li>
   </ul>
-  <p style="font-size:0.88rem; color:var(--text-muted);">Engineering includes the Engineering Programming (<bdi>0901-204</bdi>) sections assigned to its men and women students, sourced from Banner's Computer Science pages as a service course for Engineering.</p>
+  <p style="font-size:0.88rem; color:var(--text-muted);">Computer Science and Information Technology includes all men’s and women’s sections, including Engineering Programming (<bdi>0901-204</bdi>), under its original Banner college.</p>
   <p style="font-size:0.88rem; color:var(--text-muted);">Men and women · Al Ahsa campus.</p>
   <h3 style="font-size:1.05rem; margin:1rem 0 0.5rem; font-weight:700;">Day codes</h3>
   <p style="font-variant-numeric:tabular-nums;">Sun: Sunday · Mon: Monday · Tue: Tuesday · Wed: Wednesday · Thu: Thursday</p>
@@ -1372,6 +1388,7 @@ function applyLanguage(nextLanguage, saveChoice = false) {
     const code = el.dataset.college;
     el.textContent = currentLanguage === 'en' ? COLLEGE_EN[code] : ({
       '22': 'الهندسة (طلاب)', '22F': 'الهندسة (طالبات)', '08': 'العلوم (طلاب)',
+      '09': 'الحاسب (طلاب)', '09F': 'الحاسب (طالبات)',
       '08F': 'العلوم (طالبات)', '17': 'مركز اللغات (طلاب)', '17F': 'مركز اللغات (طالبات)',
     })[code];
   });
