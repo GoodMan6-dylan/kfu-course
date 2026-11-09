@@ -1,0 +1,52 @@
+{
+  "date": "2026-11-09",
+  "timezone": "Asia/Riyadh",
+  "term_code": "144820",
+  "baseline": "3fd3ecffae8040a7aaf7fd2a18ef94454e48bb52",
+  "steps": [
+    {
+      "id": "college_coverage",
+      "description": "إضافة الحاسب ونقل البرمجة الهندسية",
+      "commit": "7e91d28d92c022dce7e27dd8499386c5867adb5e"
+    },
+    {
+      "id": "section_stars",
+      "description": "تمييز الشعب بالنجوم وفلتر المميزة",
+      "commit": "08db250f498cba4b02b4274d182ab0af9a683d37"
+    },
+    {
+      "id": "lazy_browsing",
+      "description": "تخفيف العرض وتقسيم المقررات",
+      "commit": "20a8ac072a40ae8e21d790a60a0f3af36927bc0e"
+    },
+    {
+      "id": "contact_links",
+      "description": "روابط التواصل في تيليجرام",
+      "commit": "e6dba810fc2aaccb461a7393f12548dc4115b187"
+    },
+    {
+      "id": "gentle_fades",
+      "description": "حركات ظهور خفيفة وتقليل الحركة",
+      "commit": "2fd9e283bea7c0e5716c079061e8144ef24c00f3"
+    }
+  ],
+  "validation": {
+    "sections": 2865,
+    "computer_science_men": 453,
+    "computer_science_women": 405,
+    "ui_assertions_passed": 79,
+    "initial_course_cards": 20,
+    "initial_section_rows": 0,
+    "server_safety_regressions": "passed",
+    "browser_checks": [
+      "Arabic and English",
+      "390px mobile and desktop",
+      "stars persist after reload",
+      "stars independent of timetable",
+      "pagination",
+      "college and department filters",
+      "Telegram links"
+    ]
+  },
+  "rollback": "Each feature is a separate commit. Revert the requested feature with a new commit; do not force-push. Review dependencies for stars and lazy browsing, and regenerate matching server data if college coverage is reverted."
+}
