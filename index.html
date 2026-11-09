@@ -384,6 +384,11 @@ main {
 .btn-reset:hover { background: var(--border); }
 
 /* ============ COURSE TABLE ============ */
+.browse-pagination { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 1rem; margin: 1rem 0; }
+.browse-pagination[hidden] { display: none; }
+.browse-pagination button:disabled { opacity: 0.4; cursor: default; }
+.browse-pagination span { color: var(--text-muted); font-size: 0.85rem; }
+
 .results-meta {
   display: flex;
   justify-content: space-between;
@@ -417,6 +422,7 @@ main {
 .toggle-row input { accent-color: var(--kfu-green); }
 
 .course-list {
+  scroll-margin-top: 80px;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -430,6 +436,7 @@ main {
 }
 
 .course-header {
+  width: 100%; border: 0; font: inherit; text-align: start; color: inherit;
   display: grid;
   grid-template-columns: auto 1fr auto auto;
   gap: 0.75rem;
@@ -441,12 +448,14 @@ main {
   user-select: none;
   transition: background 0.15s;
 }
+.course-title, .course-name, .course-meta-text { display: block; }
+.course-header:focus-visible { outline: 2px solid var(--kfu-green); outline-offset: -3px; }
 .course-header:hover { background: var(--kfu-green-light); }
 .course-group.collapsed .course-header { border-bottom-color: transparent; }
 
 @media (max-width: 600px) {
   .course-header { grid-template-columns: minmax(0, 1fr) auto auto; }
-  .course-header > div { grid-column: 1 / -1; grid-row: 2; min-width: 0; }
+  .course-header > .course-title { grid-column: 1 / -1; grid-row: 2; min-width: 0; }
   .course-header > .course-code { grid-column: 1; grid-row: 1; justify-self: start; }
   .course-header > .section-count { grid-column: 2; grid-row: 1; }
   .course-header > .chevron { grid-column: 3; grid-row: 1; }
@@ -1128,6 +1137,11 @@ footer a:hover { text-decoration: underline; }
     </div>
 
     <div id="courseList" class="course-list"></div>
+    <div id="browsePagination" class="browse-pagination" role="navigation" aria-label="صفحات المقررات" hidden>
+      <button type="button" class="btn-reset" id="browsePrevious" data-i18n="previousPage">السابق</button>
+      <span id="browsePageStatus" aria-live="polite"></span>
+      <button type="button" class="btn-reset" id="browseNext" data-i18n="nextPage">التالي</button>
+    </div>
   </section>
 
   <!-- SCHEDULE TAB -->
@@ -1247,7 +1261,7 @@ const I18N = {
     searchPlaceholder: 'مثلاً: ستاتيكا أو 2200-201 أو 27498',
     collegeLabel: 'الكلية', allColleges: 'كل الكليات', genderLabel: 'الجنس',
     allGenders: 'الجميع', men: 'طلاب', women: 'طالبات', departmentLabel: 'القسم',
-    allDepartments: 'كل الأقسام', starredOnly: '★ المميزة بنجمة', starSection: 'تمييز الشعبة بنجمة', unstarSection: 'إلغاء نجمة الشعبة', dayLabel: 'اليوم', allDays: 'كل الأيام', reset: '↺ تصفير',
+    allDepartments: 'كل الأقسام', starredOnly: '★ المميزة بنجمة', previousPage: 'السابق', nextPage: 'التالي', page: 'صفحة', coursePages: 'صفحات المقررات', starSection: 'تمييز الشعبة بنجمة', unstarSection: 'إلغاء نجمة الشعبة', dayLabel: 'اليوم', allDays: 'كل الأيام', reset: '↺ تصفير',
     showing: 'عرض', of: 'من', sections: 'شعبة', onlyAvailable: 'الشعب المتاحة فقط',
     hideConflicts: 'إخفاء المتعارض مع جدولي', selectedCourses: 'المواد المختارة',
     print: '🖨 طباعة', copyCrns: '📋 نسخ CRNs', clearAll: 'حذف الكل',
@@ -1278,7 +1292,7 @@ const I18N = {
     searchPlaceholder: 'e.g. 2200-201 or 27498',
     collegeLabel: 'College', allColleges: 'All colleges', genderLabel: 'Students',
     allGenders: 'All students', men: 'Men', women: 'Women', departmentLabel: 'Department',
-    allDepartments: 'All departments', starredOnly: '★ Starred sections', starSection: 'Star section', unstarSection: 'Unstar section', dayLabel: 'Day', allDays: 'All days', reset: '↺ Reset',
+    allDepartments: 'All departments', starredOnly: '★ Starred sections', previousPage: 'Previous', nextPage: 'Next', page: 'Page', coursePages: 'Course pages', starSection: 'Star section', unstarSection: 'Unstar section', dayLabel: 'Day', allDays: 'All days', reset: '↺ Reset',
     showing: 'Showing', of: 'of', sections: 'sections', onlyAvailable: 'Available only',
     hideConflicts: 'Hide conflicts with my timetable', selectedCourses: 'Selected courses',
     print: '🖨 Print', copyCrns: '📋 Copy CRNs', clearAll: 'Clear all',
@@ -1534,6 +1548,33 @@ function toggleStar(crn) {
 
 // Filters state
 const filters = { q: '', college: '', dept: '', day: '', gender: '', onlyAvailable: false, hideConflicts: false };
+const BROWSE_PAGE_SIZE = 20;
+let browsePage = 0;
+const openCourseKeys = new Set();
+let browseGroups = new Map();
+let browsePageCount = 1;
+let searchTimer;
+
+function refreshBrowse() {
+  clearTimeout(searchTimer);
+  browsePage = 0;
+  renderBrowse();
+}
+function courseGroupKey(g) { return `${g.college}|${g.dept}|${g.course}`; }
+function courseGroupId(g) { return `course-${g.college}-${g.dept}-${g.course}`; }
+function toggleCourseGroup(key) {
+  const group = browseGroups.get(key);
+  if (!group) return;
+  if (openCourseKeys.has(key)) openCourseKeys.delete(key);
+  else openCourseKeys.add(key);
+  const expanded = openCourseKeys.has(key);
+  const element = document.getElementById(courseGroupId(group));
+  element.classList.toggle('collapsed', !expanded);
+  element.querySelector('.course-header').setAttribute('aria-expanded', String(expanded));
+  // Closing removes row nodes; unopened courses never build their rows.
+  element.querySelector('.sections-container').innerHTML = expanded ? group.sections.map(renderSectionRow).join('') : '';
+}
+
 
 // ============================================================
 // HELPERS
@@ -1661,41 +1702,41 @@ function renderBrowse() {
   document.getElementById('totalSections').textContent = DATA.sections.length;
   document.getElementById('totalCount').textContent = DATA.sections.length;
 
+  browsePageCount = Math.max(1, Math.ceil(grouped.length / BROWSE_PAGE_SIZE));
+  browsePage = Math.max(0, Math.min(browsePage, browsePageCount - 1));
+  const visibleGroups = grouped.slice(browsePage * BROWSE_PAGE_SIZE, (browsePage + 1) * BROWSE_PAGE_SIZE);
+  browseGroups = new Map(visibleGroups.map(g => [courseGroupKey(g), g]));
+  const pagination = document.getElementById('browsePagination');
+  pagination.hidden = browsePageCount <= 1;
+  pagination.setAttribute('aria-label', t('coursePages'));
+  document.getElementById('browsePrevious').disabled = browsePage === 0;
+  document.getElementById('browseNext').disabled = browsePage === browsePageCount - 1;
+  document.getElementById('browsePageStatus').textContent = `${t('page')} ${browsePage + 1} ${t('of')} ${browsePageCount}`;
+
   const list = document.getElementById('courseList');
   if (grouped.length === 0) {
-    list.innerHTML = `
-      <div class="empty-state">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <h3>${t('noResultsTitle')}</h3>
-        <p>${t('noResultsHelp')}</p>
-      </div>`;
+    list.innerHTML = `<div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <h3>${t('noResultsTitle')}</h3><p>${t('noResultsHelp')}</p></div>`;
     return;
   }
-
-  // Build HTML
-  list.innerHTML = grouped.map(g => {
-    const deptName = departmentName(g.dept);
-    const collegeCode = g.college;
-    const collegeLabel = collegeName(collegeCode);
-    return `
-      <div class="course-group" data-course="${escapeHtml(g.course)}">
-        <div class="course-header">
-          <span class="course-code">${escapeHtml(g.course)}</span>
-          <div>
-            <div class="course-name" dir="auto">${escapeHtml(courseName(g))}</div>
-            <div class="course-meta-text">${escapeHtml(collegeLabel)} · ${escapeHtml(deptName)}</div>
-          </div>
-          <span class="section-count">${g.sections.length} ${g.sections.length === 1 ? t('singleSection') : t('manySections')}</span>
-          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </div>
-        <div class="sections-container">
-          ${g.sections.map(s => renderSectionRow(s)).join('')}
-        </div>
-      </div>
-    `;
+  list.innerHTML = visibleGroups.map(g => {
+    const key = courseGroupKey(g);
+    const id = courseGroupId(g);
+    const expanded = openCourseKeys.has(key);
+    return `<div class="course-group${expanded ? '' : ' collapsed'}" id="${escapeHtml(id)}" data-course="${escapeHtml(g.course)}">
+      <button type="button" class="course-header" data-group-key="${escapeHtml(key)}" aria-expanded="${expanded}" aria-controls="${escapeHtml(id)}-sections">
+        <span class="course-code">${escapeHtml(g.course)}</span>
+        <span class="course-title">
+          <span class="course-name" dir="auto">${escapeHtml(courseName(g))}</span>
+          <span class="course-meta-text">${escapeHtml(collegeName(g.college))} · ${escapeHtml(departmentName(g.dept))}</span>
+        </span>
+        <span class="section-count">${g.sections.length} ${g.sections.length === 1 ? t('singleSection') : t('manySections')}</span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
+      <div class="sections-container" id="${escapeHtml(id)}-sections">${expanded ? g.sections.map(renderSectionRow).join('') : ''}</div>
+    </div>`;
   }).join('');
-
-  // attach event listeners (delegated)
 }
 
 function renderSectionRow(s) {
@@ -1917,7 +1958,7 @@ document.addEventListener('click', (e) => {
   // Course header toggle
   const header = e.target.closest('.course-header');
   if (header) {
-    header.parentElement.classList.toggle('collapsed');
+    toggleCourseGroup(header.dataset.groupKey);
     return;
   }
   // Tab switching
@@ -1974,32 +2015,33 @@ document.addEventListener('change', (e) => {
 // Filter bindings
 document.getElementById('searchInput').addEventListener('input', (e) => {
   filters.q = e.target.value;
-  renderBrowse();
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(refreshBrowse, 120);
 });
 document.getElementById('genderFilter').addEventListener('change', (e) => {
   filters.gender = e.target.value;
-  renderBrowse();
+  refreshBrowse();
 });
 document.getElementById('collegeSelect').addEventListener('change', (e) => {
   filters.college = e.target.value;
   populateDepartments();
-  renderBrowse();
+  refreshBrowse();
 });
 document.getElementById('deptSelect').addEventListener('change', (e) => {
   filters.dept = e.target.value;
-  renderBrowse();
+  refreshBrowse();
 });
 document.getElementById('dayFilter').addEventListener('change', (e) => {
   filters.day = e.target.value;
-  renderBrowse();
+  refreshBrowse();
 });
 document.getElementById('onlyAvailable').addEventListener('change', (e) => {
   filters.onlyAvailable = e.target.checked;
-  renderBrowse();
+  refreshBrowse();
 });
 document.getElementById('hideConflicts').addEventListener('change', (e) => {
   filters.hideConflicts = e.target.checked;
-  renderBrowse();
+  refreshBrowse();
 });
 document.getElementById('btnReset').addEventListener('click', () => {
   filters.q = ''; filters.college = ''; filters.dept = ''; filters.day = ''; filters.gender = '';
@@ -2011,8 +2053,18 @@ document.getElementById('btnReset').addEventListener('click', () => {
   document.getElementById('onlyAvailable').checked = false;
   document.getElementById('hideConflicts').checked = false;
   populateDepartments();
-  renderBrowse();
+  refreshBrowse();
 });
+
+// Pagination changes only the visible course cards, never the saved timetable.
+for (const [id, step] of [['browsePrevious', -1], ['browseNext', 1]]) {
+  document.getElementById(id).addEventListener('click', () => {
+    clearTimeout(searchTimer);
+    browsePage = Math.max(0, Math.min(browsePage + step, browsePageCount - 1));
+    renderBrowse();
+    document.getElementById('courseList').scrollIntoView({ block: 'start' });
+  });
+}
 
 // Schedule actions
 document.getElementById('btnPrint').addEventListener('click', () => window.print());
