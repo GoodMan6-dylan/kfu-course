@@ -882,6 +882,30 @@ main {
 }
 
 /* ============ MODAL/SHARE ============ */
+.conflict-dialog {
+  width: min(600px, calc(100% - 2rem)); max-height: calc(100dvh - 2rem);
+  margin: auto; padding: 0; border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text); background: var(--surface);
+  box-shadow: var(--shadow-lg);
+}
+.conflict-dialog[open] { display: flex; flex-direction: column; animation: content-reveal 160ms ease-out; }
+.conflict-dialog::backdrop { background: rgba(12, 30, 22, 0.5); }
+.conflict-dialog-heading { padding: 1.25rem 1.25rem 0.5rem; flex-shrink: 0; }
+.conflict-dialog-heading h2 { margin: 0 0 0.4rem; font-size: 1.25rem; color: var(--kfu-green-dark); }
+.conflict-dialog-heading p { color: var(--text-muted); font-size: 0.9rem; }
+.conflict-dialog-body { padding: 0.5rem 1.25rem 1.25rem; overflow-y: auto; min-height: 0; }
+.replacement-label { font-size: 0.85rem; font-weight: 700; margin: 0.6rem 0; }
+.replacement-section { padding: 0.85rem; margin-bottom: 0.6rem; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.replacement-section.is-new { background: var(--kfu-green-light); border-color: var(--kfu-green); }
+.replacement-section h3 { font-size: 0.95rem; margin: 0 0 0.3rem; }
+.replacement-meta { font-size: 0.82rem; color: var(--text-muted); overflow-wrap: anywhere; }
+.replacement-overlap { margin-top: 0.45rem; color: #8a3b20; font-size: 0.85rem; }
+.conflict-dialog-actions { display: flex; gap: 0.65rem; justify-content: flex-end; padding: 1rem 1.25rem; border-top: 1px solid var(--border); flex-shrink: 0; }
+.conflict-dialog-actions button { min-height: 44px; }
+@media (max-width: 600px) { .conflict-dialog-actions button { flex: 1; } }
+@media (prefers-reduced-motion: reduce) { .conflict-dialog[open] { animation: none; } }
+@media print { .conflict-dialog { display: none !important; } }
+
 .toast {
   position: fixed;
   bottom: 2rem;
@@ -1237,7 +1261,18 @@ footer a:hover { text-decoration: underline; }
 <div class="contact-block"><p data-i18n="contact">للتواصل، طلب التعديلات والاقتراحات</p><div class="contact-links"><a href="https://t.me/i68liw" target="_blank" rel="noopener noreferrer" dir="ltr">Telegram · @i68liw</a><a href="https://t.me/PlIl4" target="_blank" rel="noopener noreferrer" dir="ltr">Telegram · @PlIl4</a></div></div>
 </footer>
 
-<div class="toast" id="toast"></div>
+<dialog id="conflictDialog" class="conflict-dialog" aria-labelledby="conflictDialogTitle" aria-describedby="conflictDialogDescription">
+  <div class="conflict-dialog-heading">
+    <h2 id="conflictDialogTitle" data-i18n="replaceTitle">هذه الشعبة تتعارض مع جدولك</h2>
+    <p id="conflictDialogDescription" data-i18n="replaceDescription">الاستبدال يزيل الشعب الموضحة أدناه ويضيف الشعبة الجديدة مكانها. إلغاء يبقي جدولك كما هو.</p>
+  </div>
+  <div class="conflict-dialog-body" id="conflictDialogBody"></div>
+  <div class="conflict-dialog-actions">
+    <button type="button" class="btn btn-ghost" id="cancelReplacement" data-i18n="cancelReplacement">إلغاء</button>
+    <button type="button" class="btn btn-primary" id="confirmReplacement" data-i18n="replaceAction">استبدال</button>
+  </div>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="data.js?v=20261109-cs"></script>
 <script>
@@ -1293,6 +1328,11 @@ const I18N = {
     noResultsTitle: 'لا توجد شعب مطابقة للبحث', noResultsHelp: 'جرّب تغيير الفلاتر أو استخدام كلمات بحث أخرى',
     singleSection: 'شعبة', manySections: 'شعب', noTime: 'لا يوجد وقت محدد',
     conflict: 'تعارض', conflictTitle: 'تعارض مع شعبة في جدولك',
+    replaceTitle: 'هذه الشعبة تتعارض مع جدولك',
+    replaceDescription: 'الاستبدال يزيل الشعب الموضحة أدناه ويضيف الشعبة الجديدة مكانها. إلغاء يبقي جدولك كما هو.',
+    replacementNew: 'الشعبة الجديدة', replacementOld: 'ستُزال هذه الشعب عند الاستبدال', overlapAt: 'وقت التعارض:',
+    replaceAction: 'استبدال', cancelReplacement: 'إلغاء', replacedToast: 'تم استبدال الشعب المتعارضة وإضافة الشعبة الجديدة',
+    replacementChanged: 'تغيّر جدولك؛ راجع قائمة الشعب ثم أكد الاستبدال.',
     creditHour: 'س', time: 'الوقت', section: 'شعبة',
     noSelection: 'لا توجد مواد مختارة بعد. اذهب إلى تبويب «تصفح الشعب» وأضف ما تريد.',
     conflictBanner: 'تعارض في الأوقات:', oneConflict: 'تعارض', manyConflicts: 'تعارضات',
@@ -1324,6 +1364,11 @@ const I18N = {
     noResultsTitle: 'No matching sections', noResultsHelp: 'Try other filters or search terms',
     singleSection: 'section', manySections: 'sections', noTime: 'No scheduled time',
     conflict: 'Conflict', conflictTitle: 'Conflicts with a section in your timetable',
+    replaceTitle: 'This section conflicts with your timetable',
+    replaceDescription: 'Replace removes the sections listed below and adds the new section in their place. Cancel keeps your timetable unchanged.',
+    replacementNew: 'New section', replacementOld: 'These sections will be removed', overlapAt: 'Overlapping time:',
+    replaceAction: 'Replace', cancelReplacement: 'Cancel', replacedToast: 'Conflicting sections replaced with the new section',
+    replacementChanged: 'Your timetable changed. Review the sections before confirming the replacement.',
     creditHour: 'credits', time: 'Time', section: 'Section',
     noSelection: 'No courses selected yet. Open “Browse sections” to add some.',
     conflictBanner: 'Time conflicts:', oneConflict: 'conflict', manyConflicts: 'conflicts',
@@ -1458,6 +1503,7 @@ function applyLanguage(nextLanguage, saveChoice = false) {
   renderCheckStatus();
   populateDepartments();
   rerenderAll();
+  if (pendingSelection) renderReplacementPreview();
   document.dispatchEvent(new CustomEvent('kfu:languagechange', { detail: { language: currentLanguage } }));
 }
 
@@ -1661,6 +1707,99 @@ function getConflictsFor(crn) {
     }
   }
   return conflicts;
+}
+
+// A conflicting choice stays pending until its exact replacement is reviewed.
+let pendingSelection = null;
+
+function conflictOverlaps(a, b) {
+  const overlaps = new Map();
+  for (const first of a.meetings) {
+    for (const second of b.meetings) {
+      const start = Math.max(first.time[0], second.time[0]);
+      const end = Math.min(first.time[1], second.time[1]);
+      if (start >= end) continue;
+      for (const day of first.days) {
+        if (second.days.includes(day)) overlaps.set(`${day}|${start}|${end}`, { day, start, end });
+      }
+    }
+  }
+  return [...overlaps.values()].sort((a, b) => DAYS_ORDER.indexOf(a.day) - DAYS_ORDER.indexOf(b.day) || a.start - b.start || a.end - b.end);
+}
+
+function focusSectionChoice(crn) {
+  const choice = document.querySelector(`[data-action="toggle"][data-crn="${crn}"]`);
+  (choice || document.getElementById('searchInput')).focus({ preventScroll: true });
+}
+
+function replacementSectionCard(section, incoming = null) {
+  const overlaps = incoming ? conflictOverlaps(incoming, section) : [];
+  const timeText = overlaps.map(o => `${escapeHtml(dayName(o.day))} <bdi dir="ltr">${fmtTime(o.start)}–${fmtTime(o.end)}</bdi>`).join(' · ');
+  return `<article class="replacement-section${incoming ? '' : ' is-new'}">
+    <h3 dir="auto">${escapeHtml(courseName(section))}</h3>
+    <p class="replacement-meta"><bdi>${escapeHtml(section.course)}</bdi> · ${t('section')} ${escapeHtml(section.section)} · <bdi>CRN ${escapeHtml(section.crn)}</bdi></p>
+    ${incoming ? `<p class="replacement-overlap">${t('overlapAt')} ${timeText}</p>` : ''}
+  </article>`;
+}
+
+function renderReplacementPreview() {
+  if (!pendingSelection) return;
+  const incoming = SECTION_BY_CRN[pendingSelection.crn];
+  if (!incoming) return;
+  document.getElementById('conflictDialogBody').innerHTML =
+    `<p class="replacement-label">${t('replacementNew')}</p>${replacementSectionCard(incoming)}` +
+    `<p class="replacement-label">${t('replacementOld')} (${pendingSelection.conflicts.length})</p>` +
+    pendingSelection.conflicts.map(crn => SECTION_BY_CRN[crn]).filter(Boolean).map(section => replacementSectionCard(section, incoming)).join('');
+}
+
+function requestSectionSelection(crn) {
+  if (pendingSelection || selectedCRNs.has(crn) || !Object.hasOwn(SECTION_BY_CRN, crn)) return;
+  const conflicts = getConflictsFor(crn);
+  if (conflicts.length) {
+    pendingSelection = { crn, conflicts: conflicts.map(section => section.crn).sort() };
+    renderReplacementPreview();
+    document.getElementById('conflictDialog').showModal();
+    document.getElementById('cancelReplacement').focus();
+    return;
+  }
+  selectedCRNs.add(crn);
+  saveSelection();
+  rerenderAll();
+  focusSectionChoice(crn);
+  showToast(t('addedToast'));
+}
+
+function cancelSectionReplacement() {
+  if (!pendingSelection) return;
+  const { crn } = pendingSelection;
+  pendingSelection = null;
+  document.getElementById('conflictDialog').close();
+  focusSectionChoice(crn);
+}
+
+function confirmSectionReplacement() {
+  if (!pendingSelection) return;
+  const { crn, conflicts } = pendingSelection;
+  if (!Object.hasOwn(SECTION_BY_CRN, crn) || selectedCRNs.has(crn)) {
+    cancelSectionReplacement();
+    return;
+  }
+  const currentConflicts = getConflictsFor(crn).map(section => section.crn).sort();
+  // Never remove a section that was not shown in the current preview.
+  if (JSON.stringify(currentConflicts) !== JSON.stringify(conflicts)) {
+    pendingSelection.conflicts = currentConflicts;
+    renderReplacementPreview();
+    showToast(t('replacementChanged'));
+    return;
+  }
+  for (const existingCrn of currentConflicts) selectedCRNs.delete(existingCrn);
+  selectedCRNs.add(crn);
+  pendingSelection = null;
+  document.getElementById('conflictDialog').close();
+  saveSelection();
+  rerenderAll();
+  focusSectionChoice(crn);
+  showToast(t('replacedToast'));
 }
 
 // ============================================================
@@ -2021,19 +2160,29 @@ document.addEventListener('change', (e) => {
   if (e.target.matches('[data-action="toggle"]')) {
     const crn = e.target.dataset.crn;
     if (e.target.checked) {
-      selectedCRNs.add(crn);
-      const conflicts = getConflictsFor(crn);
-      if (conflicts.length > 0) {
-        showToast(`⚠ ${t('conflictToast')} ${conflicts.length} ${conflicts.length === 1 ? t('singleSection') : t('manySections')} ${t('inYourSchedule')}`);
-      } else {
-        showToast(t('addedToast'));
-      }
+      e.target.checked = selectedCRNs.has(crn);
+      requestSectionSelection(crn);
     } else {
       selectedCRNs.delete(crn);
+      saveSelection();
+      rerenderAll();
+      focusSectionChoice(crn);
     }
-    saveSelection();
-    // re-render to update conflict highlighting and selection state
-    rerenderAll();
+  }
+});
+
+document.getElementById('cancelReplacement').addEventListener('click', cancelSectionReplacement);
+document.getElementById('confirmReplacement').addEventListener('click', confirmSectionReplacement);
+document.getElementById('conflictDialog').addEventListener('cancel', event => {
+  event.preventDefault();
+  cancelSectionReplacement();
+});
+document.getElementById('conflictDialog').addEventListener('close', () => {
+  // Also clear a pending choice if the browser closes the dialog itself.
+  if (pendingSelection && !document.getElementById('conflictDialog').open) {
+    const { crn } = pendingSelection;
+    pendingSelection = null;
+    focusSectionChoice(crn);
   }
 });
 
