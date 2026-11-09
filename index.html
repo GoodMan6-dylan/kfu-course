@@ -506,6 +506,22 @@ main {
 .sections-container { display: block; }
 .course-group.collapsed .sections-container { display: none; }
 
+/* Brief fades use opacity/transform without animating layout dimensions. */
+@keyframes content-reveal {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.course-group { animation: content-reveal 150ms ease-out; }
+.course-group:not(.collapsed) .sections-container { animation: content-reveal 140ms ease-out; }
+.tab-panel.active { animation: content-reveal 160ms ease-out; }
+.star-button { transition: background-color 120ms, color 120ms, transform 120ms; }
+.star-button:active { transform: scale(0.96); }
+@media (prefers-reduced-motion: reduce) {
+  .course-group, .sections-container, .tab-panel.active { animation: none !important; }
+  .chevron, .star-button { transition: none !important; }
+  .star-button:active { transform: none; }
+}
+
 .section-row {
   display: grid;
   grid-template-columns: auto 60px 80px 1fr 1.2fr 1fr 0.8fr auto;
