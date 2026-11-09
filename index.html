@@ -898,6 +898,12 @@ footer {
 }
 footer a { color: var(--kfu-green); text-decoration: none; }
 footer a:hover { text-decoration: underline; }
+.contact-block { padding: 1rem 0; }
+.contact-block h3 { font-size: 1rem; margin-bottom: 0.6rem; }
+.contact-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.65rem; margin-top: 0.6rem; }
+.contact-links a { display: inline-flex; align-items: center; min-height: 44px; padding: 0.5rem 0.9rem; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--kfu-green-dark); background: var(--surface); text-decoration: none; }
+.contact-links a:hover { background: var(--kfu-green-light); }
+#aboutContent .contact-links { justify-content: flex-start; }
 
 /* loading state */
 .loader {
@@ -1193,6 +1199,7 @@ footer a:hover { text-decoration: underline; }
       <p style="font-size:0.88rem; color:var(--text-muted);">تشمل كلية الحاسب وتقنية المعلومات جميع شعب الطلاب والطالبات، ومنها البرمجة الهندسية (<bdi>0901-204</bdi>) حسب تصنيف بانر.</p>
       <p style="font-size:0.88rem; color:var(--text-muted);">الجنس: طلاب وطالبات — الأحساء.</p>
 
+      <div class="contact-block"><h3>للتواصل والاقتراحات</h3><div class="contact-links"><a href="https://t.me/i68liw" target="_blank" rel="noopener noreferrer" dir="ltr">Telegram · @i68liw</a><a href="https://t.me/PlIl4" target="_blank" rel="noopener noreferrer" dir="ltr">Telegram · @PlIl4</a></div></div>
       <h3 style="font-size:1.05rem; margin:1rem 0 0.5rem; font-weight:700;">رموز الأيام</h3>
       <p style="font-variant-numeric:tabular-nums;">
         <strong>ح</strong>: الأحد ·
@@ -1211,6 +1218,7 @@ footer a:hover { text-decoration: underline; }
 
 <footer>
   <p id="footerText">صُنع بواسطة <strong>محمد القريني ومحمد الشواف</strong>، طلاب الهندسة الكهربائية والمدنية · جامعة الملك فيصل · <span id="lastUpdated">آخر تغيير في البيانات: —</span> · <span id="lastChecked">آخر فحص: جارٍ التحقق…</span></p>
+<div class="contact-block"><p data-i18n="contact">للتواصل، طلب التعديلات والاقتراحات</p><div class="contact-links"><a href="https://t.me/i68liw" target="_blank" rel="noopener noreferrer" dir="ltr">Telegram · @i68liw</a><a href="https://t.me/PlIl4" target="_blank" rel="noopener noreferrer" dir="ltr">Telegram · @PlIl4</a></div></div>
 </footer>
 
 <div class="toast" id="toast"></div>
@@ -1261,7 +1269,7 @@ const I18N = {
     searchPlaceholder: 'مثلاً: ستاتيكا أو 2200-201 أو 27498',
     collegeLabel: 'الكلية', allColleges: 'كل الكليات', genderLabel: 'الجنس',
     allGenders: 'الجميع', men: 'طلاب', women: 'طالبات', departmentLabel: 'القسم',
-    allDepartments: 'كل الأقسام', starredOnly: '★ المميزة بنجمة', previousPage: 'السابق', nextPage: 'التالي', page: 'صفحة', coursePages: 'صفحات المقررات', starSection: 'تمييز الشعبة بنجمة', unstarSection: 'إلغاء نجمة الشعبة', dayLabel: 'اليوم', allDays: 'كل الأيام', reset: '↺ تصفير',
+    contact: 'للتواصل، طلب التعديلات والاقتراحات', allDepartments: 'كل الأقسام', starredOnly: '★ المميزة بنجمة', previousPage: 'السابق', nextPage: 'التالي', page: 'صفحة', coursePages: 'صفحات المقررات', starSection: 'تمييز الشعبة بنجمة', unstarSection: 'إلغاء نجمة الشعبة', dayLabel: 'اليوم', allDays: 'كل الأيام', reset: '↺ تصفير',
     showing: 'عرض', of: 'من', sections: 'شعبة', onlyAvailable: 'الشعب المتاحة فقط',
     hideConflicts: 'إخفاء المتعارض مع جدولي', selectedCourses: 'المواد المختارة',
     print: '🖨 طباعة', copyCrns: '📋 نسخ CRNs', clearAll: 'حذف الكل',
@@ -1292,7 +1300,7 @@ const I18N = {
     searchPlaceholder: 'e.g. 2200-201 or 27498',
     collegeLabel: 'College', allColleges: 'All colleges', genderLabel: 'Students',
     allGenders: 'All students', men: 'Men', women: 'Women', departmentLabel: 'Department',
-    allDepartments: 'All departments', starredOnly: '★ Starred sections', previousPage: 'Previous', nextPage: 'Next', page: 'Page', coursePages: 'Course pages', starSection: 'Star section', unstarSection: 'Unstar section', dayLabel: 'Day', allDays: 'All days', reset: '↺ Reset',
+    contact: 'Contact us for changes and suggestions', allDepartments: 'All departments', starredOnly: '★ Starred sections', previousPage: 'Previous', nextPage: 'Next', page: 'Page', coursePages: 'Course pages', starSection: 'Star section', unstarSection: 'Unstar section', dayLabel: 'Day', allDays: 'All days', reset: '↺ Reset',
     showing: 'Showing', of: 'of', sections: 'sections', onlyAvailable: 'Available only',
     hideConflicts: 'Hide conflicts with my timetable', selectedCourses: 'Selected courses',
     print: '🖨 Print', copyCrns: '📋 Copy CRNs', clearAll: 'Clear all',
@@ -1393,6 +1401,7 @@ const ABOUT_EN_HTML = `
   </ul>
   <p style="font-size:0.88rem; color:var(--text-muted);">Computer Science and Information Technology includes all men’s and women’s sections, including Engineering Programming (<bdi>0901-204</bdi>), under its original Banner college.</p>
   <p style="font-size:0.88rem; color:var(--text-muted);">Men and women · Al Ahsa campus.</p>
+  <div class="contact-block"><h3>Contact and suggestions</h3><div class="contact-links"><a href="https://t.me/i68liw" target="_blank" rel="noopener noreferrer" dir="ltr">Telegram · @i68liw</a><a href="https://t.me/PlIl4" target="_blank" rel="noopener noreferrer" dir="ltr">Telegram · @PlIl4</a></div></div>
   <h3 style="font-size:1.05rem; margin:1rem 0 0.5rem; font-weight:700;">Day codes</h3>
   <p style="font-variant-numeric:tabular-nums;">Sun: Sunday · Mon: Monday · Tue: Tuesday · Wed: Wednesday · Thu: Thursday</p>
   <p style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--border); font-size:0.85rem; color:var(--text-muted);">
